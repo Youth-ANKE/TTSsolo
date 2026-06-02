@@ -1,0 +1,85 @@
+# AI有声书配置文件
+# 复制此文件为 config.yaml 并填入你的API密钥
+
+# ===== API 密钥配置 =====
+api:
+  deepseek:
+    api_key: "YOUR_DEEPSEEK_API_KEY"    # DeepSeek API Key
+    base_url: "https://api.deepseek.com"
+    model: "deepseek-v4-flash"           # 推荐使用 v4-flash（性价比高），也可用 deepseek-v4-pro
+  mimo:
+    api_key: "YOUR_MIMO_API_KEY"         # 小米MiMo API Key
+    base_url: "https://api.xiaomimimo.com/v1"
+
+# ===== LLM 文本处理配置 =====
+llm:
+  # 文本分段长度（每个chunk的最大字符数，避免超出TTS限制）
+  chunk_max_chars: 500
+  # 是否启用思考模式（deepseek-reasoner / v4-flash思考模式）
+  thinking_mode: false
+  # 请求重试次数
+  max_retries: 3
+  # 请求间隔（秒）
+  request_interval: 1
+
+# ===== TTS 语音合成配置 =====
+tts:
+  # 音色模式: preset / voicedesign / voiceclone
+  voice_mode: "voicedesign"
+  # 音频输出格式: wav / pcm16
+  audio_format: "wav"
+  # 请求重试次数
+  max_retries: 3
+  # 请求间隔（秒）
+  request_interval: 2
+  # 是否在段落间添加静音间隔
+  silence_between_paragraphs: 1.0  # 单位：秒
+
+# ===== 音色配置 =====
+# 根据voice_mode选择对应的配置
+voices:
+  # --- 预置音色模式 ---
+  preset:
+    narrator: "白桦"      # 旁白使用白桦（沉稳男声）
+    # 其他角色使用预置音色映射（角色名 -> 音色名）
+    # 角色名由LLM自动识别，此处可手动覆盖
+    voice_map:
+      # "角色A": "冰糖"
+      # "角色B": "苏打"
+
+  # --- 音色设计模式（通过文字描述生成音色） ---
+  voicedesign:
+    narrator: |
+      一位中年男性，嗓音醇厚温暖，语速适中偏慢，像一位经验丰富的电台播音员在朗读文学作品。
+      声音沉稳有磁性，吐字清晰，带有一种让人安心沉浸的讲述感。
+    # 其他角色的音色描述（角色名 -> 描述文本）
+    voice_descriptions:
+      # "女主角": "年轻女性，声音清亮甜美，语速轻快，像二十出头的活泼女孩。"
+      # "老者": "年迈老先生，嗓音沙哑沧桑，语速缓慢，带着岁月沉淀的智慧。"
+
+  # --- 音色克隆模式（基于音频样本） ---
+  voiceclone:
+    narrator: "voices/narrator_sample.wav"  # 旁白音色样本文件路径
+    # 其他角色的音色样本（角色名 -> 音频文件路径）
+    voice_samples:
+      # "角色A": "voices/character_a_sample.wav"
+
+# ===== 音频输出配置 =====
+output:
+  # 输出格式: wav / mp3
+  format: "mp3"
+  # MP3比特率（仅format为mp3时有效）
+  mp3_bitrate: "192k"
+  # 输出目录
+  dir: "output"
+  # 是否保留分段音频文件
+  keep_segments: false
+  # 采样率（TTS固定24kHz）
+  sample_rate: 24000
+
+# ===== 有声书元数据 =====
+metadata:
+  title: "AI有声书"
+  author: "未知"
+  # 每章最大字符数（用于自动分章）
+  chapter_max_chars: 10000

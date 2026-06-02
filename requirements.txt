@@ -1,0 +1,9 @@
+openai>=1.0.0
+PyYAML>=6.0
+numpy>=1.24.0
+soundfile>=0.12.1
+# 可选依赖（根据需要安装）
+# ebooklib>=0.18     # EPUB解析
+# PyMuPDF>=1.23.0    # PDF解析（推荐）或 PyPDF2
+# pydub>=0.25.1      # MP3转换备选方案
+# librosa>=0.10.0    # 高质量音频重采样
