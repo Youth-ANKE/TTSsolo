@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TTSsolo — AI 多人有声书生成器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ===== RESET & BASE ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-0:#09090b;--bg-1:#111113;--bg-2:#18181b;--bg-3:#1e1e22;--bg-4:#27272a;
+  --border-1:#27272a;--border-2:#3f3f46;
+  --text-0:#fafafa;--text-1:#a1a1aa;--text-2:#71717a;--text-3:#52525b;
+  --accent:#6366f1;--accent-hover:#818cf8;--accent-dim:rgba(99,102,241,.12);
+  --green:#22c55e;--green-dim:rgba(34,197,94,.12);
+  --amber:#f59e0b;--amber-dim:rgba(245,158,11,.12);
+  --red:#ef4444;--red-dim:rgba(239,68,68,.12);
+  --radius:8px;--radius-lg:12px;
+  --font:'Inter','Noto Sans SC',system-ui,sans-serif;
+  --mono:'SF Mono',Menlo,monospace;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg-0);color:var(--text-0);line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{color:var(--accent-hover)}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg-1)}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:3px}
+
+/* ===== LAYOUT ===== */
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+
+/* ===== NAV ===== */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:rgba(9,9,11,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-1)}
+.nav-brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;letter-spacing:-.02em}
+.nav-brand svg{width:24px;height:24px;color:var(--accent)}
+.nav-links{display:flex;gap:8px}
+.nav-links a{font-size:13px;color:var(--text-2);padding:6px 12px;border-radius:6px;transition:all .15s}
+.nav-links a:hover{color:var(--text-0);background:var(--bg-3)}
+.nav-status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2)}
+.nav-status .dot{width:6px;height:6px;border-radius:50%;background:var(--text-3)}
+.nav-status .dot.online{background:var(--green);box-shadow:0 0 6px var(--green)}
+
+/* ===== HERO ===== */
+.hero{position:relative;min-height:calc(100vh - 56px);display:flex;align-items:center;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:url('assets/hero-bg.jpg') center/cover no-repeat;opacity:.35;filter:saturate(.6)}
+.hero-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,var(--bg-0) 0%,transparent 30%,transparent 60%,var(--bg-0) 100%)}
+.hero-content{position:relative;z-index:1;max-width:640px;padding:80px 0 60px}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--accent);background:var(--accent-dim);padding:4px 12px;border-radius:20px;margin-bottom:24px;letter-spacing:.02em}
+.hero h1{font-size:clamp(36px,5vw,56px);font-weight:700;line-height:1.1;letter-spacing:-.03em;margin-bottom:16px}
+.hero h1 span{color:var(--accent)}
+.hero p{font-size:17px;color:var(--text-1);max-width:480px;line-height:1.7;margin-bottom:32px}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap}
+.hero-stats{display:flex;gap:32px;margin-top:48px;padding-top:24px;border-top:1px solid var(--border-1)}
+.hero-stat .value{font-size:24px;font-weight:600;letter-spacing:-.02em}
+.hero-stat .label{font-size:12px;color:var(--text-2);margin-top:2px}
+
+/* ===== BUTTONS ===== */
+.btn{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:500;padding:10px 20px;border-radius:var(--radius);border:none;cursor:pointer;transition:all .15s;font-family:var(--font)}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-hover);transform:translateY(-1px);box-shadow:0 4px 12px rgba(99,102,241,.3)}
+.btn-secondary{background:var(--bg-3);color:var(--text-0);border:1px solid var(--border-1)}
+.btn-secondary:hover{background:var(--bg-4);border-color:var(--border-2)}
+.btn-ghost{background:transparent;color:var(--text-1);padding:8px 12px}
+.btn-ghost:hover{color:var(--text-0);background:var(--bg-2)}
+.btn-sm{font-size:13px;padding:6px 14px}
+.btn svg{width:16px;height:16px}
+
+/* ===== SECTION ===== */
+.section{padding:80px 0}
+.section-header{margin-bottom:40px}
+.section-header h2{font-size:28px;font-weight:600;letter-spacing:-.02em;margin-bottom:8px}
+.section-header p{font-size:15px;color:var(--text-1)}
+.section-divider{border:none;border-top:1px solid var(--border-1);margin:0}
+
+/* ===== WORKSPACE (核心工作区) ===== */
+.workspace{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:860px){.workspace{grid-template-columns:1fr}}
+
+.panel{background:var(--bg-1);border:1px solid var(--border-1);border-radius:var(--radius-lg);overflow:hidden}
+.panel-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border-1)}
+.panel-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.panel-title svg{width:16px;height:16px;color:var(--accent)}
+.panel-body{padding:20px}
+
+/* ===== UPLOAD ===== */
+.upload-zone{border:2px dashed var(--border-2);border-radius:var(--radius);padding:40px 24px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:var(--accent-dim)}
+.upload-zone svg{width:32px;height:32px;color:var(--text-3);margin-bottom:12px}
+.upload-zone .title{font-size:14px;font-weight:500;margin-bottom:4px}
+.upload-zone .hint{font-size:12px;color:var(--text-2)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-file{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg-2);border-radius:var(--radius);margin-top:12px}
+.upload-file .icon{width:36px;height:36px;background:var(--accent-dim);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase}
+.upload-file .info{flex:1;min-width:0}
+.upload-file .name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.upload-file .meta{font-size:11px;color:var(--text-2)}
+.upload-file .remove{cursor:pointer;color:var(--text-3);transition:color .15s}
+.upload-file .remove:hover{color:var(--red)}
+
+/* ===== FORM ===== */
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:12px;font-weight:500;color:var(--text-1);margin-bottom:6px;letter-spacing:.03em;text-transform:uppercase}
+.form-input,.form-select,.form-textarea{width:100%;padding:8px 12px;background:var(--bg-2);border:1px solid var(--border-1);border-radius:var(--radius);color:var(--text-0);font-size:14px;font-family:var(--font);transition:border-color .15s;outline:none}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent)}
+.form-textarea{resize:vertical;min-height:80px;line-height:1.5}
+.form-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2371717a' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-hint{font-size:11px;color:var(--text-2);margin-top:4px}
+.form-section{margin-top:20px;padding-top:16px;border-top:1px solid var(--border-1)}
+
+/* ===== VOICE CARDS ===== */
+.voice-mode-tabs{display:flex;gap:4px;background:var(--bg-2);padding:3px;border-radius:var(--radius);margin-bottom:16px}
+.voice-mode-tab{flex:1;text-align:center;font-size:12px;font-weight:500;padding:6px 12px;border-radius:6px;cursor:pointer;transition:all .15s;color:var(--text-2)}
+.voice-mode-tab.active{background:var(--bg-4);color:var(--text-0)}
+.voice-mode-tab:hover:not(.active){color:var(--text-1)}
+.voice-card{background:var(--bg-2);border:1px solid var(--border-1);border-radius:var(--radius);padding:14px 16px;margin-bottom:8px}
+.voice-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.voice-card-name{font-size:13px;font-weight:500}
+.voice-card-tag{font-size:10px;font-weight:500;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.04em}
+.voice-card-tag.narrator{background:var(--accent-dim);color:var(--accent)}
+.voice-card-tag.character{background:var(--green-dim);color:var(--green)}
+.voice-card-desc{font-size:12px;color:var(--text-2);line-height:1.5}
+.voice-add{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;border:1px dashed var(--border-2);border-radius:var(--radius);font-size:12px;color:var(--text-2);cursor:pointer;transition:all .15s;background:transparent;font-family:var(--font)}
+.voice-add:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+
+/* ===== PROGRESS ===== */
+.pipeline{display:flex;flex-direction:column;gap:2px}
+.pipeline-stage{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg-2);border-radius:var(--radius);transition:all .3s}
+.pipeline-stage.active{background:var(--accent-dim);border:1px solid rgba(99,102,241,.2)}
+.pipeline-stage.done{opacity:.6}
+.pipeline-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.pipeline-icon.pending{background:var(--bg-3);color:var(--text-3)}
+.pipeline-icon.active{background:var(--accent);color:#fff;animation:pulse 2s infinite}
+.pipeline-icon.done{background:var(--green-dim);color:var(--green)}
+.pipeline-info{flex:1;min-width:0}
+.pipeline-name{font-size:13px;font-weight:500}
+.pipeline-detail{font-size:11px;color:var(--text-2);margin-top:2px}
+.pipeline-bar{width:100%;height:3px;background:var(--bg-3);border-radius:2px;margin-top:6px;overflow:hidden}
+.pipeline-bar-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .3s;width:0}
+.pipeline-time{font-size:12px;color:var(--text-2);font-family:var(--mono)}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* ===== SEGMENTS LIST ===== */
+.segments{max-height:320px;overflow-y:auto}
+.segment-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;transition:background .15s}
+.segment-item:hover{background:var(--bg-2)}
+.segment-idx{font-size:11px;color:var(--text-3);font-family:var(--mono);width:28px;flex-shrink:0}
+.segment-speaker{font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;flex-shrink:0}
+.segment-speaker.narrator{background:var(--accent-dim);color:var(--accent)}
+.segment-speaker.character{background:var(--green-dim);color:var(--green)}
+.segment-text{flex:1;font-size:12px;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.segment-emotion{font-size:10px;color:var(--text-3);flex-shrink:0}
+.segment-status{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.segment-status.pending{background:var(--text-3)}
+.segment-status.processing{background:var(--amber);animation:pulse 1.5s infinite}
+.segment-status.done{background:var(--green)}
+
+/* ===== AUDIO PLAYER ===== */
+.audio-player{background:var(--bg-2);border-radius:var(--radius);padding:16px;display:flex;align-items:center;gap:16px}
+.audio-player .play-btn{width:40px;height:40px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.audio-player .play-btn:hover{background:var(--accent-hover);transform:scale(1.05)}
+.audio-player .play-btn svg{width:16px;height:16px;color:#fff}
+.audio-player .track-info{flex:1;min-width:0}
+.audio-player .track-title{font-size:13px;font-weight:500}
+.audio-player .track-chapter{font-size:11px;color:var(--text-2)}
+.audio-player .progress{flex:1;display:flex;flex-direction:column;gap:4px}
+.audio-player .progress-bar{width:100%;height:4px;background:var(--bg-4);border-radius:2px;cursor:pointer;position:relative}
+.audio-player .progress-fill{height:100%;background:var(--accent);border-radius:2px;width:0;transition:width .1s}
+.audio-player .time{font-size:11px;color:var(--text-2);font-family:var(--mono);display:flex;justify-content:space-between}
+
+/* ===== OUTPUT LIST ===== */
+.output-item{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg-2);border-radius:var(--radius);margin-bottom:8px;transition:background .15s}
+.output-item:hover{background:var(--bg-3)}
+.output-icon{width:40px;height:40px;background:var(--accent-dim);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.output-icon svg{width:18px;height:18px;color:var(--accent)}
+.output-info{flex:1;min-width:0}
+.output-name{font-size:13px;font-weight:500}
+.output-meta{font-size:11px;color:var(--text-2)}
+.output-actions{display:flex;gap:6px}
+
+/* ===== LOG ===== */
+.log-viewer{background:var(--bg-0);border:1px solid var(--border-1);border-radius:var(--radius);padding:12px 16px;max-height:200px;overflow-y:auto;font-family:var(--mono);font-size:12px;line-height:1.8}
+.log-line{display:flex;gap:8px}
+.log-time{color:var(--text-3);flex-shrink:0}
+.log-msg{color:var(--text-1)}
+.log-msg.info{color:var(--accent)}
+.log-msg.success{color:var(--green)}
+.log-msg.warn{color:var(--amber)}
+.log-msg.error{color:var(--red)}
+
+/* ===== FOOTER ===== */
+.footer{padding:40px 0;border-top:1px solid var(--border-1);text-align:center}
+.footer p{font-size:12px;color:var(--text-3)}
+
+/* ===== ENTRANCE ANIMATIONS ===== */
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.animate-up{animation:fadeUp .6s ease-out both}
+.animate-fade{animation:fadeIn .8s ease-out both}
+.delay-1{animation-delay:.1s}
+.delay-2{animation-delay:.2s}
+.delay-3{animation-delay:.3s}
+.delay-4{animation-delay:.4s}
+.delay-5{animation-delay:.5s}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:640px){
+  .hero h1{font-size:32px}
+  .hero-stats{gap:20px}
+  .form-row{grid-template-columns:1fr}
+  .nav-links{display:none}
+  .section{padding:48px 0}
+}
+
+/* ===== TOAST ===== */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:200;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;animation:fadeUp .3s ease-out;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.toast.success{background:var(--green);color:#fff}
+.toast.error{background:var(--red);color:#fff}
+.toast.info{background:var(--accent);color:#fff}
+</style>
+</head>
+<body>
+
+<!-- ===== NAV ===== -->
+<nav class="nav">
+  <div class="nav-brand">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+    TTSsolo
+  </div>
+  <div class="nav-links">
+    <a href="#workspace">工作台</a>
+    <a href="#output">输出</a>
+    <a href="https://github.com/Youth-ANKE/TTSsolo" target="_blank">GitHub</a>
+  </div>
+  <div class="nav-status">
+    <div class="dot" id="statusDot"></div>
+    <span id="statusText">未连接</span>
+  </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-badge animate-up">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        DeepSeek LLM + MiMo TTS v2.5
+      </div>
+      <h1 class="animate-up delay-1">多人 AI 有声书<br><span>一键生成</span></h1>
+      <p class="animate-up delay-2">上传小说文本，自动识别角色、分配音色、合成多角色语音。支持音色设计、音色克隆、情绪风格控制，流水线并行加速。</p>
+      <div class="hero-actions animate-up delay-3">
+        <a href="#workspace" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          开始制作
+        </a>
+        <a href="https://github.com/Youth-ANKE/TTSsolo" target="_blank" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          查看源码
+        </a>
+      </div>
+      <div class="hero-stats animate-up delay-4">
+        <div class="hero-stat">
+          <div class="value">3</div>
+          <div class="label">音色模式</div>
+        </div>
+        <div class="hero-stat">
+          <div class="value">8+</div>
+          <div class="label">预置音色</div>
+        </div>
+        <div class="hero-stat">
+          <div class="value">17</div>
+          <div class="label">情绪标签</div>
+        </div>
+        <div class="hero-stat">
+          <div class="value">3x</div>
+          <div class="label">流水线加速</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== WORKSPACE ===== -->
+<section class="section" id="workspace">
+  <div class="container">
+    <div class="section-header">
+      <h2>工作台</h2>
+      <p>上传文本、配置参数、启动生成</p>
+    </div>
+
+    <div class="workspace">
+      <!-- LEFT COLUMN -->
+      <div style="display:flex;flex-direction:column;gap:24px">
+
+        <!-- Upload Panel -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              上传文本
+            </div>
+            <span style="font-size:11px;color:var(--text-3)">TXT / EPUB / PDF</span>
+          </div>
+          <div class="panel-body">
+            <div class="upload-zone" id="uploadZone">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <div class="title">拖拽文件到此处，或点击选择</div>
+              <div class="hint">支持 .txt .epub .pdf，最大 50MB</div>
+              <input type="file" accept=".txt,.epub,.pdf" id="fileInput">
+            </div>
+            <div id="fileInfo" style="display:none"></div>
+          </div>
+        </div>
+
+        <!-- Config Panel -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              生成配置
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">有声书标题</label>
+                <input class="form-input" id="bookTitle" placeholder="输入标题...">
+              </div>
+              <div class="form-group">
+                <label class="form-label">作者</label>
+                <input class="form-input" id="bookAuthor" placeholder="输入作者...">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">输出格式</label>
+                <select class="form-select" id="outputFormat">
+                  <option value="mp3">MP3 (192kbps)</option>
+                  <option value="wav">WAV (无损)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">LLM 模型</label>
+                <select class="form-select" id="llmModel">
+                  <option value="deepseek-v4-flash">DeepSeek V4 Flash</option>
+                  <option value="deepseek-v4-pro">DeepSeek V4 Pro</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">分段长度</label>
+                <input class="form-input" type="number" id="chunkSize" value="500" min="100" max="2000">
+                <div class="form-hint">每个语音片段的最大字符数</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">段落间静音</label>
+                <input class="form-input" type="number" id="silence" value="1.0" min="0" max="5" step="0.1">
+                <div class="form-hint">单位：秒</div>
+              </div>
+            </div>
+            <div class="form-section">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">章节范围（留空=全部）</label>
+                  <div style="display:flex;gap:8px">
+                    <input class="form-input" type="number" id="chapterStart" placeholder="起始" min="0">
+                    <span style="color:var(--text-3);line-height:36px">—</span>
+                    <input class="form-input" type="number" id="chapterEnd" placeholder="结束" min="0">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">处理模式</label>
+                  <select class="form-select" id="processMode">
+                    <option value="pipeline">流水线（并行加速）</option>
+                    <option value="serial">串行（稳定模式）</option>
+                    <option value="script">仅生成剧本</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Voice Config Panel -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+              音色配置
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="voice-mode-tabs" id="voiceModeTabs">
+              <div class="voice-mode-tab active" data-mode="voicedesign">音色设计</div>
+              <div class="voice-mode-tab" data-mode="preset">预置音色</div>
+              <div class="voice-mode-tab" data-mode="voiceclone">音色克隆</div>
+            </div>
+
+            <!-- Voice Design Mode -->
+            <div id="voiceDesignPanel">
+              <div class="voice-card">
+                <div class="voice-card-header">
+                  <span class="voice-card-name">旁白</span>
+                  <span class="voice-card-tag narrator">讲述者</span>
+                </div>
+                <textarea class="form-textarea" id="narratorDesc" placeholder="描述旁白音色，如：一位中年男性，嗓音醇厚温暖，语速适中偏慢...">一位中年男性，嗓音醇厚温暖，语速适中偏慢，像一位经验丰富的电台播音员在朗读文学作品。声音沉稳有磁性，吐字清晰，带有一种让人安心沉浸的讲述感。</textarea>
+              </div>
+              <div id="characterVoices"></div>
+              <button class="voice-add" id="addCharacterBtn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                添加角色音色
+              </button>
+            </div>
+
+            <!-- Preset Mode -->
+            <div id="voicePresetPanel" style="display:none">
+              <div class="form-group">
+                <label class="form-label">旁白音色</label>
+                <select class="form-select" id="presetNarrator">
+                  <option value="白桦">白桦（沉稳男声）</option>
+                  <option value="苏打">苏打（磁性男声）</option>
+                  <option value="冰糖">冰糖（温柔女声）</option>
+                  <option value="茉莉">茉莉（清亮女声）</option>
+                </select>
+              </div>
+              <div class="form-hint" style="margin-bottom:12px">角色音色将由 LLM 自动识别后分配预置音色</div>
+            </div>
+
+            <!-- Voice Clone Mode -->
+            <div id="voiceClonePanel" style="display:none">
+              <div class="form-group">
+                <label class="form-label">旁白音色样本</label>
+                <div class="upload-zone" style="padding:20px">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <div class="title" style="font-size:12px">上传旁白音频样本（10-30秒）</div>
+                  <input type="file" accept="audio/*">
+                </div>
+              </div>
+              <div class="form-hint">角色音色样本将在 LLM 识别角色后逐一上传</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Generate Button -->
+        <button class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:15px" id="generateBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          开始生成有声书
+        </button>
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div style="display:flex;flex-direction:column;gap:24px">
+
+        <!-- Pipeline Progress -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              处理进度
+            </div>
+            <span class="pipeline-time" id="totalTime">00:00</span>
+          </div>
+          <div class="panel-body">
+            <div class="pipeline" id="pipeline">
+              <div class="pipeline-stage" id="stage-parse">
+                <div class="pipeline-icon pending" id="icon-parse">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+                <div class="pipeline-info">
+                  <div class="pipeline-name">文本解析</div>
+                  <div class="pipeline-detail" id="detail-parse">等待开始</div>
+                </div>
+              </div>
+              <div class="pipeline-stage" id="stage-analyze">
+                <div class="pipeline-icon pending" id="icon-analyze">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </div>
+                <div class="pipeline-info">
+                  <div class="pipeline-name">角色分析</div>
+                  <div class="pipeline-detail" id="detail-analyze">等待开始</div>
+                </div>
+              </div>
+              <div class="pipeline-stage" id="stage-script">
+                <div class="pipeline-icon pending" id="icon-script">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </div>
+                <div class="pipeline-info">
+                  <div class="pipeline-name">剧本生成</div>
+                  <div class="pipeline-detail" id="detail-script">等待开始</div>
+                  <div class="pipeline-bar"><div class="pipeline-bar-fill" id="bar-script"></div></div>
+                </div>
+              </div>
+              <div class="pipeline-stage" id="stage-tts">
+                <div class="pipeline-icon pending" id="icon-tts">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+                </div>
+                <div class="pipeline-info">
+                  <div class="pipeline-name">语音合成</div>
+                  <div class="pipeline-detail" id="detail-tts">等待开始</div>
+                  <div class="pipeline-bar"><div class="pipeline-bar-fill" id="bar-tts"></div></div>
+                </div>
+              </div>
+              <div class="pipeline-stage" id="stage-merge">
+                <div class="pipeline-icon pending" id="icon-merge">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </div>
+                <div class="pipeline-info">
+                  <div class="pipeline-name">音频合并</div>
+                  <div class="pipeline-detail" id="detail-merge">等待开始</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Segments Preview -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              片段预览
+            </div>
+            <span style="font-size:11px;color:var(--text-3)" id="segmentCount">0 个片段</span>
+          </div>
+          <div class="panel-body" style="padding:8px 12px">
+            <div class="segments" id="segmentsList">
+              <div style="text-align:center;padding:32px 0;color:var(--text-3);font-size:13px">生成剧本后显示片段列表</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audio Player -->
+        <div class="panel" id="playerPanel" style="display:none">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              音频播放
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="audio-player">
+              <button class="play-btn" id="playBtn">
+                <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </button>
+              <div class="track-info">
+                <div class="track-title" id="trackTitle">未选择章节</div>
+                <div class="track-chapter" id="trackChapter">—</div>
+              </div>
+              <div class="progress" style="flex:1">
+                <div class="progress-bar" id="audioProgressBar">
+                  <div class="progress-fill" id="audioProgressFill"></div>
+                </div>
+                <div class="time">
+                  <span id="audioCurrentTime">0:00</span>
+                  <span id="audioDuration">0:00</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Log -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+              运行日志
+            </div>
+            <button class="btn btn-ghost btn-sm" id="clearLog">清除</button>
+          </div>
+          <div class="panel-body" style="padding:0">
+            <div class="log-viewer" id="logViewer">
+              <div class="log-line"><span class="log-time">[--:--:--]</span><span class="log-msg">等待任务启动...</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== OUTPUT ===== -->
+<section class="section" id="output">
+  <div class="container">
+    <div class="section-header">
+      <h2>输出文件</h2>
+      <p>生成的有声书章节音频</p>
+    </div>
+    <div id="outputList">
+      <div style="text-align:center;padding:48px 0;color:var(--text-3);font-size:14px">尚未生成任何文件</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <div class="container">
+    <p>TTSsolo — AI 多人有声书生成器 · DeepSeek LLM + MiMo TTS v2.5</p>
+  </div>
+</footer>
+
+<!-- ===== TOAST ===== -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ===== STATE =====
+const state = {
+  file: null,
+  characters: [],
+  segments: [],
+  isRunning: false,
+  timer: null,
+  elapsed: 0,
+};
+
+// ===== DOM =====
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+// ===== UPLOAD =====
+const uploadZone = $('#uploadZone');
+const fileInput = $('#fileInput');
+
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
+
+function handleFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!['txt', 'epub', 'pdf'].includes(ext)) {
+    showToast('不支持的文件格式', 'error');
+    return;
+  }
+  state.file = file;
+  const size = file.size > 1048576 ? (file.size / 1048576).toFixed(1) + ' MB' : (file.size / 1024).toFixed(0) + ' KB';
+  const extLabel = { txt: 'TXT', epub: 'EPUB', pdf: 'PDF' }[ext];
+  $('#fileInfo').style.display = 'block';
+  $('#fileInfo').innerHTML = `
+    <div class="upload-file">
+      <div class="icon">${extLabel}</div>
+      <div class="info">
+        <div class="name">${file.name}</div>
+        <div class="meta">${size}</div>
+      </div>
+      <div class="remove" onclick="removeFile()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+    </div>`;
+  uploadZone.style.display = 'none';
+  log('info', `文件已选择: ${file.name} (${size})`);
+  if (!$('#bookTitle').value) $('#bookTitle').value = file.name.replace(/\.[^.]+$/, '');
+}
+
+function removeFile() {
+  state.file = null;
+  fileInput.value = '';
+  $('#fileInfo').style.display = 'none';
+  uploadZone.style.display = '';
+}
+
+// ===== VOICE MODE TABS =====
+$$('.voice-mode-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    $$('.voice-mode-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const mode = tab.dataset.mode;
+    $('#voiceDesignPanel').style.display = mode === 'voicedesign' ? '' : 'none';
+    $('#voicePresetPanel').style.display = mode === 'preset' ? '' : 'none';
+    $('#voiceClonePanel').style.display = mode === 'voiceclone' ? '' : 'none';
+  });
+});
+
+// ===== ADD CHARACTER =====
+let charCount = 0;
+$('#addCharacterBtn').addEventListener('click', () => {
+  charCount++;
+  const id = `char-${charCount}`;
+  const div = document.createElement('div');
+  div.className = 'voice-card';
+  div.id = id;
+  div.innerHTML = `
+    <div class="voice-card-header">
+      <input class="form-input" style="max-width:160px;padding:4px 8px;font-size:12px" placeholder="角色名称" data-role="name">
+      <div style="display:flex;gap:4px">
+        <span class="voice-card-tag character">角色</span>
+        <div class="remove" style="cursor:pointer;color:var(--text-3)" onclick="document.getElementById('${id}').remove()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+      </div>
+    </div>
+    <textarea class="form-textarea" style="min-height:60px;font-size:12px" placeholder="描述该角色的音色特征..." data-role="desc"></textarea>`;
+  $('#characterVoices').appendChild(div);
+});
+
+// ===== GENERATE =====
+$('#generateBtn').addEventListener('click', startGeneration);
+
+function startGeneration() {
+  if (!state.file) { showToast('请先上传文本文件', 'error'); return; }
+  if (state.isRunning) { showToast('任务正在运行中', 'error'); return; }
+  
+  state.isRunning = true;
+  state.elapsed = 0;
+  $('#generateBtn').innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> 生成中...';
+  $('#generateBtn').style.opacity = '.7';
+  
+  // Start timer
+  state.timer = setInterval(() => {
+    state.elapsed++;
+    const m = String(Math.floor(state.elapsed / 60)).padStart(2, '0');
+    const s = String(state.elapsed % 60).padStart(2, '0');
+    $('#totalTime').textContent = `${m}:${s}`;
+  }, 1000);
+  
+  // Simulate pipeline stages
+  simulatePipeline();
+}
+
+function simulatePipeline() {
+  const stages = ['parse', 'analyze', 'script', 'tts', 'merge'];
+  let idx = 0;
+  
+  function nextStage() {
+    if (idx >= stages.length) {
+      finishGeneration();
+      return;
+    }
+    const stage = stages[idx];
+    setStageActive(stage);
+    
+    const durations = { parse: 1500, analyze: 2500, script: 4000, tts: 6000, merge: 1500 };
+    const details = {
+      parse: '正在解析文本内容...',
+      analyze: '正在识别角色和生成音色描述...',
+      script: '正在生成剧本（0/0）',
+      tts: '正在合成语音（0/0）',
+      merge: '正在合并音频...',
+    };
+    
+    $(`#detail-${stage}`).textContent = details[stage];
+    log('info', details[stage]);
+    
+    if (stage === 'script' || stage === 'tts') {
+      simulateProgress(stage, durations[stage], () => {
+        setStageDone(stage);
+        idx++;
+        setTimeout(nextStage, 300);
+      });
+    } else {
+      setTimeout(() => {
+        setStageDone(stage);
+        if (stage === 'parse') $(`#detail-parse`).textContent = '解析完成，检测到 1 章';
+        if (stage === 'analyze') {
+          $(`#detail-analyze`).textContent = '识别到 3 个角色（含旁白）';
+          state.characters = [
+            { name: '旁白', type: 'narrator' },
+            { name: '林晓', type: 'character' },
+            { name: '神秘男人', type: 'character' },
+          ];
+          renderSegments();
+        }
+        if (stage === 'merge') $(`#detail-merge`).textContent = '合并完成';
+        idx++;
+        setTimeout(nextStage, 300);
+      }, durations[stage]);
+    }
+  }
+  
+  nextStage();
+}
+
+function simulateProgress(stage, duration, cb) {
+  const total = stage === 'script' ? 8 : 12;
+  let current = 0;
+  const interval = duration / total;
+  
+  function tick() {
+    current++;
+    const pct = (current / total * 100).toFixed(0);
+    $(`#bar-${stage}`).style.width = pct + '%';
+    $(`#detail-${stage}`).textContent = `${stage === 'script' ? '正在生成剧本' : '正在合成语音'}（${current}/${total}）`;
+    
+    if (current < total) {
+      setTimeout(tick, interval + Math.random() * 200);
+    } else {
+      cb();
+    }
+  }
+  tick();
+}
+
+function setStageActive(stage) {
+  const el = $(`#stage-${stage}`);
+  el.classList.add('active');
+  el.classList.remove('done');
+  $(`#icon-${stage}`).classList.add('active');
+  $(`#icon-${stage}`).classList.remove('pending', 'done');
+}
+
+function setStageDone(stage) {
+  const el = $(`#stage-${stage}`);
+  el.classList.remove('active');
+  el.classList.add('done');
+  $(`#icon-${stage}`).classList.remove('active', 'pending');
+  $(`#icon-${stage}`).classList.add('done');
+  $(`#icon-${stage}`).innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+  log('success', `${stage === 'parse' ? '文本解析' : stage === 'analyze' ? '角色分析' : stage === 'script' ? '剧本生成' : stage === 'tts' ? '语音合成' : '音频合并'}完成`);
+}
+
+function renderSegments() {
+  const sampleSegments = [
+    { speaker: '旁白', text: '深秋的傍晚，林晓站在老宅的阁楼里，翻看着祖父留下的一箱旧物。', emotion: '平静' },
+    { speaker: '旁白', text: '灰尘在夕阳的光线中飞舞，空气中弥漫着陈旧纸张的气息。', emotion: '平静' },
+    { speaker: '林晓', text: '这到底是什么？', emotion: '惊讶' },
+    { speaker: '旁白', text: '她小心翼翼地拆开信封，里面是一张薄如蝉翼的信纸。', emotion: '平静' },
+    { speaker: '林晓', text: '祖父……你到底留下了什么秘密？', emotion: '怅然' },
+    { speaker: '旁白', text: '窗外，风突然大了起来，吹得阁楼的窗户砰砰作响。', emotion: '紧张' },
+    { speaker: '林晓', text: '谁在那里？', emotion: '恐惧' },
+    { speaker: '旁白', text: '没有回应。只有风声在空旷的老宅中回荡。', emotion: '冷漠' },
+  ];
+  
+  state.segments = sampleSegments;
+  $('#segmentCount').textContent = `${sampleSegments.length} 个片段`;
+  
+  $('#segmentsList').innerHTML = sampleSegments.map((s, i) => `
+    <div class="segment-item">
+      <span class="segment-idx">${String(i + 1).padStart(2, '0')}</span>
+      <span class="segment-speaker ${s.speaker === '旁白' ? 'narrator' : 'character'}">${s.speaker}</span>
+      <span class="segment-text">${s.text}</span>
+      <span class="segment-emotion">${s.emotion}</span>
+      <span class="segment-status done"></span>
+    </div>`).join('');
+}
+
+function finishGeneration() {
+  clearInterval(state.timer);
+  state.isRunning = false;
+  
+  $('#generateBtn').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> 开始生成有声书';
+  $('#generateBtn').style.opacity = '1';
+  
+  // Show player
+  $('#playerPanel').style.display = '';
+  $('#trackTitle').textContent = '第一章 神秘的来信';
+  $('#trackChapter').textContent = 'AI有声书 · MP3 192kbps';
+  
+  // Show output
+  $('#outputList').innerHTML = `
+    <div class="output-item">
+      <div class="output-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+      </div>
+      <div class="output-info">
+        <div class="output-name">chapter_000_第一章 神秘的来信.mp3</div>
+        <div class="output-meta">MP3 · 192kbps · 24kHz · 3:42</div>
+      </div>
+      <div class="output-actions">
+        <button class="btn btn-ghost btn-sm" onclick="showToast('开始下载...','info')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          下载
+        </button>
+      </div>
+    </div>`;
+  
+  log('success', '有声书生成完成！共 1 个章节，总时长 3:42');
+  showToast('有声书生成完成', 'success');
+  
+  // Set status online
+  $('#statusDot').classList.add('online');
+  $('#statusText').textContent = '就绪';
+}
+
+// ===== LOG =====
+function log(type, msg) {
+  const now = new Date();
+  const time = [now.getHours(), now.getMinutes(), now.getSeconds()].map(n => String(n).padStart(2, '0')).join(':');
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML = `<span class="log-time">[${time}]</span><span class="log-msg ${type}">${msg}</span>`;
+  $('#logViewer').appendChild(line);
+  $('#logViewer').scrollTop = $('#logViewer').scrollHeight;
+}
+
+$('#clearLog').addEventListener('click', () => {
+  $('#logViewer').innerHTML = '<div class="log-line"><span class="log-time">[--:--:--]</span><span class="log-msg">日志已清除</span></div>';
+});
+
+// ===== TOAST =====
+function showToast(msg, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  $('#toastContainer').appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// ===== AUDIO PLAYER (basic) =====
+let isPlaying = false;
+$('#playBtn').addEventListener('click', () => {
+  isPlaying = !isPlaying;
+  $('#playBtn').innerHTML = isPlaying
+    ? '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+  if (isPlaying) simulatePlayback();
+});
+
+function simulatePlayback() {
+  let progress = 0;
+  const fill = $('#audioProgressFill');
+  const current = $('#audioCurrentTime');
+  const duration = $('#audioDuration');
+  duration.textContent = '3:42';
+  
+  function tick() {
+    if (!isPlaying) return;
+    progress += 0.5;
+    const pct = Math.min((progress / 222) * 100, 100);
+    fill.style.width = pct + '%';
+    const m = Math.floor(progress / 60);
+    const s = Math.floor(progress % 60);
+    current.textContent = `${m}:${String(s).padStart(2, '0')}`;
+    if (progress < 222) requestAnimationFrame(tick);
+    else { isPlaying = false; fill.style.width = '0%'; current.textContent = '0:00'; }
+  }
+  tick();
+}
+
+// ===== INIT =====
+$('#statusDot').classList.add('online');
+$('#statusText').textContent = '就绪';
+log('info', 'TTSsolo 前端已加载，等待任务...');
+</script>
+</body>
+</html>
