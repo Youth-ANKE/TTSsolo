@@ -1,12 +1,16 @@
 """
 AI有声书 - 主流程编排模块
 串联文本解析 → LLM处理 → TTS合成 → 音频拼接 的完整流程
+支持两种模式：
+  - 串行模式（默认）：逐章依次处理，稳定可靠
+  - 流水线模式（--pipeline）：异步并行处理，速度更快
 """
 
 import os
 import sys
 import json
 import time
+import asyncio
 import logging
 import argparse
 from datetime import datetime
@@ -17,6 +21,7 @@ from .parser import parse_book, ParsedBook
 from .llm_processor import LLMProcessor, ChapterScript, Character
 from .tts_engine import TTSEngine, AudioSegment
 from .audio_processor import AudioPostProcessor
+from .pipeline import AudiobookPipeline
 
 
 def setup_logging(log_file: str = ""):
@@ -27,7 +32,7 @@ def setup_logging(log_file: str = ""):
     handlers = [logging.StreamHandler(sys.stdout)]
     
     if log_file:
-        os.makedirs(os.path.dirname(log_file), exist_ok=True)
+        os.makedirs(os.path.dirname(log_file) if os.path.dirname(log_file) else ".", exist_ok=True)
         handlers.append(logging.FileHandler(log_file, encoding="utf-8"))
     
     logging.basicConfig(
@@ -39,7 +44,7 @@ def setup_logging(log_file: str = ""):
 
 
 class AudiobookGenerator:
-    """AI有声书生成器"""
+    """AI有声书生成器（串行模式）"""
     
     def __init__(self, config: AppConfig):
         self.config = config
@@ -47,67 +52,49 @@ class AudiobookGenerator:
         self.tts = TTSEngine(config)
         self.audio_processor = AudioPostProcessor(config)
         
-        # 输出目录
         self.output_dir = os.path.join(config.project_root, config.output.dir)
         os.makedirs(self.output_dir, exist_ok=True)
         
-        # 剧本保存目录
         self.script_dir = os.path.join(self.output_dir, "scripts")
         os.makedirs(self.script_dir, exist_ok=True)
     
     def generate(self, input_file: str, 
                  chapter_range: Optional[tuple] = None,
                  skip_tts: bool = False) -> List[str]:
-        """
-        生成完整有声书
-        
-        Args:
-            input_file: 输入文件路径（TXT/EPUB/PDF）
-            chapter_range: 章节范围 (start, end)，None表示全部
-            skip_tts: 是否跳过TTS合成（仅生成剧本）
-        
-        Returns:
-            生成的音频文件路径列表
-        """
+        """生成完整有声书（串行模式）"""
         start_time = time.time()
         logger.info("=" * 60)
-        logger.info("AI有声书生成器启动")
+        logger.info("AI有声书生成器启动（串行模式）")
         logger.info(f"输入文件: {input_file}")
         logger.info(f"音色模式: {self.config.tts.voice_mode}")
         logger.info(f"输出格式: {self.config.output.format}")
         logger.info("=" * 60)
         
-        # ===== 第一步：解析文本 =====
+        # 解析文本
         logger.info("\n📚 第一步：解析文本文件")
         book = parse_book(input_file)
         logger.info(f"书名: {book.title}")
         logger.info(f"作者: {book.author}")
         logger.info(f"章节数: {len(book.chapters)}")
         
-        # 应用章节范围
         chapters = book.chapters
         if chapter_range:
             start, end = chapter_range
             chapters = [ch for ch in chapters if start <= ch.index <= end]
             logger.info(f"处理章节范围: {start}-{end}，共 {len(chapters)} 章")
         
-        # ===== 第二步：角色分析 =====
+        # 角色分析
         logger.info("\n🎭 第二步：角色分析")
-        # 使用全书文本进行角色分析
         analysis_text = book.raw_text[:15000] if len(book.raw_text) > 15000 else book.raw_text
         characters = self.llm.analyze_characters(analysis_text)
-        
-        # 将配置中的音色信息合并到角色
         self._merge_voice_config(characters)
         
-        # ===== 第三步：逐章处理 =====
+        # 逐章处理
         output_files = []
-        
         for chapter in chapters:
             logger.info(f"\n📖 处理章节 [{chapter.index}] {chapter.title}")
             logger.info("-" * 40)
             
-            # 3.1 生成剧本
             script = self.llm.process_chapter(
                 chapter_index=chapter.index,
                 chapter_title=chapter.title,
@@ -115,7 +102,6 @@ class AudiobookGenerator:
                 characters=characters,
             )
             
-            # 保存剧本JSON
             script_file = os.path.join(
                 self.script_dir,
                 f"chapter_{chapter.index:03d}_{chapter.title}.json"
@@ -127,10 +113,8 @@ class AudiobookGenerator:
                 logger.info("跳过TTS合成（skip_tts=True）")
                 continue
             
-            # 3.2 TTS合成
             audio_segments = self.tts.synthesize_chapter(script)
             
-            # 3.3 拼接音频
             ext = self.config.output.format
             output_filename = f"chapter_{chapter.index:03d}_{chapter.title}.{ext}"
             output_path = os.path.join(self.output_dir, output_filename)
@@ -143,10 +127,8 @@ class AudiobookGenerator:
                 output_files.append(final_path)
                 logger.info(f"✅ 章节 [{chapter.index}] 生成完成: {final_path}")
             
-            # 3.4 清理分段文件
             self.audio_processor.cleanup_segments(audio_segments)
         
-        # ===== 第四步：生成汇总 =====
         elapsed = time.time() - start_time
         logger.info("\n" + "=" * 60)
         logger.info("🎉 有声书生成完成！")
@@ -168,13 +150,11 @@ class AudiobookGenerator:
             for char in characters:
                 if char.name in preset_map:
                     char.preset_voice = preset_map[char.name]
-        
         elif voice_mode == "voicedesign":
             desc_map = voices.get("voicedesign", {}).get("voice_descriptions", {})
             for char in characters:
                 if char.name in desc_map:
                     char.voice_description = desc_map[char.name]
-        
         elif voice_mode == "voiceclone":
             sample_map = voices.get("voiceclone", {}).get("voice_samples", {})
             for char in characters:
@@ -187,27 +167,43 @@ class AudiobookGenerator:
             "chapter_index": script.chapter_index,
             "chapter_title": script.chapter_title,
             "characters": [
-                {
-                    "name": c.name,
-                    "description": c.description,
-                    "voice_description": c.voice_description,
-                }
+                {"name": c.name, "description": c.description, "voice_description": c.voice_description}
                 for c in script.characters
             ],
             "segments": [
-                {
-                    "index": s.index,
-                    "speaker": s.speaker,
-                    "text": s.text,
-                    "emotion": s.emotion,
-                    "style_instruction": s.style_instruction,
-                }
+                {"index": s.index, "speaker": s.speaker, "text": s.text,
+                 "emotion": s.emotion, "style_instruction": s.style_instruction}
                 for s in script.segments
             ],
         }
-        
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+async def run_pipeline(config: AppConfig, input_file: str,
+                       chapter_range: Optional[tuple] = None,
+                       tts_concurrent: int = 3) -> List[str]:
+    """
+    流水线模式入口（异步）
+    
+    Args:
+        config: 应用配置
+        input_file: 输入文件路径
+        chapter_range: 章节范围
+        tts_concurrent: TTS最大并发数
+    
+    Returns:
+        生成的音频文件路径列表
+    """
+    pipeline = AudiobookPipeline(
+        config=config,
+        tts_concurrent=tts_concurrent,
+    )
+    
+    return await pipeline.generate(
+        input_file=input_file,
+        chapter_range=chapter_range,
+    )
 
 
 def main():
@@ -217,20 +213,26 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 使用示例:
-  # 生成完整有声书
-  python -m src.main input.txt
+  # 串行模式生成（默认）
+  python -m src input.txt
+  
+  # 流水线模式（更快，推荐）
+  python -m src input.txt --pipeline
+  
+  # 流水线模式 + 自定义TTS并发数
+  python -m src input.txt --pipeline --tts-concurrent 5
   
   # 指定配置文件
-  python -m src.main input.txt --config my_config.yaml
+  python -m src input.txt --config my_config.yaml
   
   # 只处理第1-5章
-  python -m src.main input.txt --chapters 1 5
+  python -m src input.txt --chapters 1 5
   
   # 仅生成剧本（不合成语音）
-  python -m src.main input.txt --script-only
+  python -m src input.txt --script-only
   
   # 使用预置音色模式
-  python -m src.main input.txt --voice-mode preset
+  python -m src input.txt --voice-mode preset
         """
     )
     
@@ -251,6 +253,12 @@ def main():
                         help="有声书作者（覆盖配置）")
     parser.add_argument("--log-file", default="",
                         help="日志文件路径")
+    
+    # 流水线模式参数
+    parser.add_argument("--pipeline", "-p", action="store_true",
+                        help="启用流水线模式（异步并行，速度更快）")
+    parser.add_argument("--tts-concurrent", "-tc", type=int, default=3,
+                        help="TTS最大并发数（流水线模式，默认: 3）")
     
     args = parser.parse_args()
     
@@ -282,19 +290,28 @@ def main():
         logging.error("请设置小米MiMo API Key（配置文件或MIMO_API_KEY环境变量）")
         sys.exit(1)
     
-    # 生成有声书
-    generator = AudiobookGenerator(config)
-    
     chapter_range = None
     if args.chapters:
         chapter_range = (args.chapters[0], args.chapters[1])
     
     try:
-        output_files = generator.generate(
-            input_file=args.input,
-            chapter_range=chapter_range,
-            skip_tts=args.script_only,
-        )
+        if args.pipeline:
+            # ===== 流水线模式 =====
+            logger.info("🚀 使用流水线模式（异步并行）")
+            output_files = asyncio.run(run_pipeline(
+                config=config,
+                input_file=args.input,
+                chapter_range=chapter_range,
+                tts_concurrent=args.tts_concurrent,
+            ))
+        else:
+            # ===== 串行模式 =====
+            generator = AudiobookGenerator(config)
+            output_files = generator.generate(
+                input_file=args.input,
+                chapter_range=chapter_range,
+                skip_tts=args.script_only,
+            )
         
         if output_files:
             print(f"\n✅ 生成完成！共 {len(output_files)} 个音频文件")
