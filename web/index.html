@@ -17,6 +17,8 @@
   --green:#22c55e;--green-dim:rgba(34,197,94,.12);
   --amber:#f59e0b;--amber-dim:rgba(245,158,11,.12);
   --red:#ef4444;--red-dim:rgba(239,68,68,.12);
+  --cyan:#06b6d4;--cyan-dim:rgba(6,182,212,.12);
+  --purple:#a855f7;--purple-dim:rgba(168,85,247,.12);
   --radius:8px;--radius-lg:12px;
   --font:'Inter','Noto Sans SC',system-ui,sans-serif;
   --mono:'SF Mono',Menlo,monospace;
@@ -67,7 +69,7 @@ a:hover{color:var(--accent-hover)}
 .hero-stat .value{font-size:24px;font-weight:600;letter-spacing:-.02em}
 .hero-stat .label{font-size:12px;color:var(--text-2);margin-top:2px}
 
-/* ===== VOICE ORB (ElevenLabs-inspired) ===== */
+/* ===== VOICE ORB ===== */
 .voice-orb-wrap{position:absolute;right:8%;top:50%;transform:translateY(-50%);z-index:1;opacity:.5}
 .voice-orb{width:200px;height:200px;border-radius:50%;background:radial-gradient(circle at 40% 40%,rgba(99,102,241,.4),rgba(99,102,241,.05) 70%,transparent);position:relative;animation:orbFloat 6s ease-in-out infinite}
 .voice-orb::before{content:'';position:absolute;inset:-20px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.15),transparent 70%);animation:orbPulse 3s ease-in-out infinite}
@@ -125,7 +127,7 @@ a:hover{color:var(--accent-hover)}
 .upload-file .remove{cursor:pointer;color:var(--text-3);transition:all .15s;padding:4px;border-radius:4px}
 .upload-file .remove:hover{color:var(--red);background:var(--red-dim)}
 
-/* ===== TEXT PREVIEW (Murf AI-inspired) ===== */
+/* ===== TEXT PREVIEW ===== */
 .text-preview{margin-top:12px;animation:fadeUp .3s ease-out}
 .text-preview-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .text-preview-title{font-size:12px;font-weight:500;color:var(--text-1);display:flex;align-items:center;gap:6px}
@@ -137,6 +139,37 @@ a:hover{color:var(--accent-hover)}
 .text-preview-body .chapter-marker::before{content:'📄 ';font-size:11px}
 .text-preview-stats{display:flex;gap:16px;margin-top:8px;font-size:11px;color:var(--text-2)}
 .text-preview-stats span{display:flex;align-items:center;gap:4px}
+
+/* ===== CHAPTER LIST (NEW) ===== */
+.chapter-list{margin-top:12px;animation:fadeUp .3s ease-out}
+.chapter-list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.chapter-list-title{font-size:12px;font-weight:500;color:var(--text-1)}
+.chapter-list-actions{display:flex;gap:6px}
+.chapter-list-actions button{font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid var(--border-1);background:var(--bg-2);color:var(--text-2);cursor:pointer;transition:all .15s;font-family:var(--font)}
+.chapter-list-actions button:hover{background:var(--bg-3);color:var(--text-0)}
+.chapter-items{max-height:200px;overflow-y:auto;background:var(--bg-0);border:1px solid var(--border-1);border-radius:var(--radius);padding:8px 0}
+.chapter-item{display:flex;align-items:center;gap:10px;padding:8px 14px;cursor:pointer;transition:all .15s;border-left:3px solid transparent}
+.chapter-item:hover{background:var(--bg-2)}
+.chapter-item.selected{background:var(--accent-dim);border-left-color:var(--accent)}
+.chapter-item-checkbox{width:16px;height:16px;border:2px solid var(--border-2);border-radius:4px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.chapter-item.selected .chapter-item-checkbox{background:var(--accent);border-color:var(--accent)}
+.chapter-item.selected .chapter-item-checkbox::after{content:'✓';color:#fff;font-size:10px;font-weight:700}
+.chapter-item-info{flex:1;min-width:0}
+.chapter-item-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chapter-item-meta{font-size:10px;color:var(--text-3)}
+.chapter-item-length{font-size:11px;color:var(--text-3);font-family:var(--mono);flex-shrink:0}
+
+/* ===== COST ESTIMATOR (NEW) ===== */
+.cost-estimator{background:var(--bg-2);border:1px solid var(--border-1);border-radius:var(--radius);padding:14px 16px;margin-top:16px}
+.cost-estimator-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;font-weight:500;color:var(--text-0)}
+.cost-estimator-header svg{width:16px;height:16px;color:var(--cyan)}
+.cost-estimator-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12px;border-bottom:1px solid var(--border-1)}
+.cost-estimator-row:last-child{border-bottom:none;padding-top:8px;margin-top:4px;border-top:1px dashed var(--border-2)}
+.cost-estimator-label{color:var(--text-2);display:flex;align-items:center;gap:6px}
+.cost-estimator-value{font-family:var(--mono);color:var(--text-0)}
+.cost-estimator-value.highlight{color:var(--green);font-weight:600}
+.cost-estimator-value.warning{color:var(--amber)}
+.cost-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 6px;border-radius:4px;background:var(--cyan-dim);color:var(--cyan)}
 
 /* ===== FORM ===== */
 .form-group{margin-bottom:16px}
@@ -173,7 +206,7 @@ a:hover{color:var(--accent-hover)}
 .voice-add{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;border:1px dashed var(--border-2);border-radius:var(--radius);font-size:12px;color:var(--text-2);cursor:pointer;transition:all .2s;background:transparent;font-family:var(--font)}
 .voice-add:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
 
-/* ===== PRESET VOICE LIST (epub_to_audiobook-inspired) ===== */
+/* ===== PRESET VOICE LIST ===== */
 .preset-voice-list{display:flex;flex-direction:column;gap:6px}
 .preset-voice-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg-2);border:1px solid var(--border-1);border-radius:var(--radius);cursor:pointer;transition:all .2s}
 .preset-voice-item:hover{border-color:var(--accent);background:var(--accent-dim)}
@@ -206,11 +239,25 @@ a:hover{color:var(--accent-hover)}
 
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
 
+/* ===== EMOTION HEATMAP (NEW) ===== */
+.emotion-heatmap{margin-top:12px;padding:12px;background:var(--bg-0);border:1px solid var(--border-1);border-radius:var(--radius)}
+.emotion-heatmap-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.emotion-heatmap-title{font-size:11px;font-weight:500;color:var(--text-2)}
+.emotion-heatmap-legend{display:flex;gap:8px;align-items:center}
+.emotion-legend-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text-3)}
+.emotion-legend-color{width:8px;height:8px;border-radius:2px}
+.emotion-heatmap-grid{display:flex;gap:2px;flex-wrap:wrap}
+.emotion-heatmap-cell{width:16px;height:24px;border-radius:3px;transition:all .15s;cursor:pointer;position:relative}
+.emotion-heatmap-cell:hover{transform:scale(1.15);z-index:1;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.emotion-heatmap-cell::after{content:attr(data-emotion);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);padding:3px 6px;background:var(--bg-4);border:1px solid var(--border-2);border-radius:4px;font-size:9px;color:var(--text-1);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s}
+.emotion-heatmap-cell:hover::after{opacity:1}
+
 /* ===== SEGMENTS LIST ===== */
 .segments{max-height:320px;overflow-y:auto}
-.segment-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;transition:all .15s;cursor:default}
+.segment-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;transition:all .15s;cursor:pointer}
 .segment-item:hover{background:var(--bg-2)}
 .segment-item.highlight{background:var(--accent-dim);border-left:2px solid var(--accent)}
+.segment-item.comparing{border:1px solid var(--cyan);background:var(--cyan-dim)}
 .segment-idx{font-size:11px;color:var(--text-3);font-family:var(--mono);width:28px;flex-shrink:0}
 .segment-speaker{font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;flex-shrink:0}
 .segment-speaker.narrator{background:var(--accent-dim);color:var(--accent)}
@@ -221,8 +268,30 @@ a:hover{color:var(--accent-hover)}
 .segment-status.pending{background:var(--text-3)}
 .segment-status.processing{background:var(--amber);animation:pulse 1.5s infinite;box-shadow:0 0 4px var(--amber)}
 .segment-status.done{background:var(--green);box-shadow:0 0 4px rgba(34,197,94,.3)}
+.segment-compare-btn{opacity:0;font-size:10px;padding:2px 6px;border-radius:3px;border:1px solid var(--border-1);background:transparent;color:var(--text-3);cursor:pointer;transition:all .15s}
+.segment-item:hover .segment-compare-btn{opacity:1}
+.segment-compare-btn:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim)}
 
-/* ===== AUDIO PLAYER + WAVEFORM ===== */
+/* ===== COMPARE PLAYER (NEW) ===== */
+.compare-player{background:var(--bg-2);border:1px solid var(--border-1);border-radius:var(--radius);padding:14px 16px;margin-top:12px;animation:fadeUp .3s ease-out}
+.compare-player-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.compare-player-title{font-size:12px;font-weight:500;color:var(--text-0);display:flex;align-items:center;gap:6px}
+.compare-player-title svg{width:14px;height:14px;color:var(--cyan)}
+.compare-player-close{cursor:pointer;color:var(--text-3);padding:4px;border-radius:4px;transition:all .15s}
+.compare-player-close:hover{color:var(--red);background:var(--red-dim)}
+.compare-player-text{font-size:12px;color:var(--text-2);background:var(--bg-0);padding:8px 12px;border-radius:6px;margin-bottom:12px;line-height:1.5}
+.compare-voices{display:flex;flex-direction:column;gap:8px}
+.compare-voice-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-0);border-radius:6px;border:1px solid var(--border-1);transition:all .15s}
+.compare-voice-item:hover{border-color:var(--border-2)}
+.compare-voice-item.active{border-color:var(--cyan);background:var(--cyan-dim)}
+.compare-voice-name{font-size:12px;font-weight:500;flex:1}
+.compare-voice-emotion{font-size:10px;color:var(--text-3);padding:2px 6px;background:var(--bg-3);border-radius:3px}
+.compare-voice-play{width:28px;height:28px;border-radius:50%;border:1px solid var(--border-2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;color:var(--text-3)}
+.compare-voice-play:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim)}
+.compare-voice-play svg{width:12px;height:12px}
+.compare-voice-play.playing{border-color:var(--cyan);color:var(--cyan)}
+
+/* ===== AUDIO PLAYER ===== */
 .audio-player{background:var(--bg-2);border-radius:var(--radius);padding:16px}
 .audio-player-row{display:flex;align-items:center;gap:16px}
 .audio-player .play-btn{width:40px;height:40px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
@@ -265,6 +334,20 @@ a:hover{color:var(--accent-hover)}
 .log-msg.warn{color:var(--amber)}
 .log-msg.error{color:var(--red)}
 
+/* ===== CONFIG TEMPLATE (NEW) ===== */
+.config-template-panel{background:var(--bg-2);border:1px solid var(--border-1);border-radius:var(--radius);padding:14px 16px;margin-top:16px}
+.config-template-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;font-weight:500;color:var(--text-0)}
+.config-template-header svg{width:16px;height:16px;color:var(--purple)}
+.config-template-row{display:flex;gap:8px;flex-wrap:wrap}
+.config-template-btn{font-size:11px;padding:6px 12px;border-radius:6px;border:1px solid var(--border-1);background:var(--bg-3);color:var(--text-1);cursor:pointer;transition:all .15s;font-family:var(--font)}
+.config-template-btn:hover{background:var(--bg-4);color:var(--text-0);border-color:var(--border-2)}
+.config-template-btn.primary{border-color:var(--purple);color:var(--purple);background:var(--purple-dim)}
+.config-template-btn.primary:hover{background:var(--purple);color:#fff}
+.config-template-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.config-template-tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:3px 8px;border-radius:10px;background:var(--bg-3);color:var(--text-2);border:1px solid var(--border-1)}
+.config-template-tag .remove{cursor:pointer;color:var(--text-3);transition:color .15s}
+.config-template-tag .remove:hover{color:var(--red)}
+
 /* ===== EMPTY STATE ===== */
 .empty-state{text-align:center;padding:40px 20px}
 .empty-state svg{width:48px;height:48px;color:var(--text-3);margin-bottom:12px;opacity:.5}
@@ -297,6 +380,7 @@ a:hover{color:var(--accent-hover)}
   .nav-shortcuts{display:none}
   .section{padding:48px 0}
   .audio-player-row{flex-wrap:wrap}
+  .chapter-list-actions{display:none}
 }
 
 /* ===== TOAST ===== */
@@ -307,7 +391,7 @@ a:hover{color:var(--accent-hover)}
 .toast.info{background:var(--accent);color:#fff}
 .toast svg{width:16px;height:16px;flex-shrink:0}
 
-/* ===== KEYBOARD HINT TOOLTIP ===== */
+/* ===== KEYBOARD HINT ===== */
 .kbd-hint{position:relative}
 .kbd-hint::after{content:attr(data-kbd);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);padding:2px 6px;background:var(--bg-4);border:1px solid var(--border-2);border-radius:4px;font-family:var(--mono);font-size:10px;color:var(--text-2);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s}
 .kbd-hint:hover::after{opacity:1}
@@ -431,6 +515,17 @@ a:hover{color:var(--accent-hover)}
               <div class="text-preview-body" id="textPreviewBody"></div>
               <div class="text-preview-stats" id="textPreviewStats"></div>
             </div>
+            <!-- Chapter List (NEW) -->
+            <div id="chapterList" class="chapter-list" style="display:none">
+              <div class="chapter-list-header">
+                <span class="chapter-list-title">📚 章节列表（点击选择要生成的章节）</span>
+                <div class="chapter-list-actions">
+                  <button onclick="selectAllChapters(true)">全选</button>
+                  <button onclick="selectAllChapters(false)">全不选</button>
+                </div>
+              </div>
+              <div class="chapter-items" id="chapterItems"></div>
+            </div>
           </div>
         </div>
 
@@ -500,6 +595,59 @@ a:hover{color:var(--accent-hover)}
                   </select>
                 </div>
               </div>
+            </div>
+
+            <!-- Cost Estimator (NEW) -->
+            <div class="cost-estimator" id="costEstimator">
+              <div class="cost-estimator-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                生成成本估算
+                <span class="cost-badge">实时</span>
+              </div>
+              <div class="cost-estimator-row">
+                <span class="cost-estimator-label">📊 输入字符数</span>
+                <span class="cost-estimator-value" id="costChars">0</span>
+              </div>
+              <div class="cost-estimator-row">
+                <span class="cost-estimator-label">🤖 LLM Token (估算)</span>
+                <span class="cost-estimator-value" id="costLLM">0</span>
+              </div>
+              <div class="cost-estimator-row">
+                <span class="cost-estimator-label">🔊 TTS 字符数</span>
+                <span class="cost-estimator-value" id="costTTS">0</span>
+              </div>
+              <div class="cost-estimator-row">
+                <span class="cost-estimator-label">⏱️ 预估时长</span>
+                <span class="cost-estimator-value" id="costTime">0:00</span>
+              </div>
+              <div class="cost-estimator-row">
+                <span class="cost-estimator-label">💰 预估费用 (CNY)</span>
+                <span class="cost-estimator-value highlight" id="costMoney">¥0.00</span>
+              </div>
+            </div>
+
+            <!-- Config Template (NEW) -->
+            <div class="config-template-panel">
+              <div class="config-template-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                配置模板
+              </div>
+              <div class="config-template-row">
+                <button class="config-template-btn primary" onclick="saveConfigTemplate()">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  保存当前配置
+                </button>
+                <button class="config-template-btn" onclick="exportConfigYAML()">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  导出 YAML
+                </button>
+                <button class="config-template-btn" onclick="document.getElementById('configFileInput').click()">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  导入配置
+                </button>
+                <input type="file" id="configFileInput" accept=".json,.yaml,.yml" style="display:none" onchange="importConfigFile(this)">
+              </div>
+              <div class="config-template-list" id="configTemplateList"></div>
             </div>
           </div>
         </div>
@@ -678,6 +826,31 @@ a:hover{color:var(--accent-hover)}
           </div>
         </div>
 
+        <!-- Emotion Heatmap (NEW) -->
+        <div class="panel" id="heatmapPanel" style="display:none">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+              情绪热力图
+            </div>
+            <span style="font-size:11px;color:var(--text-3)">片段情绪分布</span>
+          </div>
+          <div class="panel-body">
+            <div class="emotion-heatmap">
+              <div class="emotion-heatmap-header">
+                <span class="emotion-heatmap-title">点击色块查看对应片段</span>
+                <div class="emotion-heatmap-legend">
+                  <div class="emotion-legend-item"><div class="emotion-legend-color" style="background:#22c55e"></div>平静</div>
+                  <div class="emotion-legend-item"><div class="emotion-legend-color" style="background:#f59e0b"></div>紧张</div>
+                  <div class="emotion-legend-item"><div class="emotion-legend-color" style="background:#ef4444"></div>激烈</div>
+                  <div class="emotion-legend-item"><div class="emotion-legend-color" style="background:#6366f1"></div>悲伤</div>
+                </div>
+              </div>
+              <div class="emotion-heatmap-grid" id="emotionHeatmapGrid"></div>
+            </div>
+          </div>
+        </div>
+
         <!-- Segments Preview -->
         <div class="panel">
           <div class="panel-header">
@@ -692,9 +865,11 @@ a:hover{color:var(--accent-hover)}
               <div class="empty-state">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="13" y2="14"/></svg>
                 <div class="title">暂无片段</div>
-                <div class="hint">生成剧本后将在此显示语音片段列表</div>
+                <div class="hint">生成剧本后将在此显示语音片段列表<br>点击「对比」按钮可试听不同音色效果</div>
               </div>
             </div>
+            <!-- Compare Player (NEW) -->
+            <div id="comparePlayer" style="display:none"></div>
           </div>
         </div>
 
@@ -720,7 +895,6 @@ a:hover{color:var(--accent-hover)}
                   <div class="track-chapter" id="trackChapter">—</div>
                 </div>
               </div>
-              <!-- Waveform -->
               <div class="waveform-container" id="waveformContainer">
                 <canvas id="waveformCanvas"></canvas>
                 <div class="waveform-playhead" id="waveformPlayhead"></div>
@@ -800,6 +974,8 @@ a:hover{color:var(--accent-hover)}
 const state = {
   file: null,
   fileText: '',
+  chapters: [],
+  selectedChapters: new Set(),
   characters: [],
   segments: [],
   isRunning: false,
@@ -811,6 +987,23 @@ const state = {
   speeds: [0.75, 1.0, 1.25, 1.5, 2.0],
   speedIdx: 1,
   previewCollapsed: false,
+  configTemplates: JSON.parse(localStorage.getItem('ttssolo_templates') || '[]'),
+  comparingSegment: null,
+};
+
+// Emotion colors for heatmap
+const emotionColors = {
+  '平静': '#22c55e',
+  '温和': '#22c55e',
+  '惊讶': '#f59e0b',
+  '紧张': '#f59e0b',
+  '恐惧': '#ef4444',
+  '愤怒': '#ef4444',
+  '激动': '#ef4444',
+  '怅然': '#6366f1',
+  '悲伤': '#6366f1',
+  '冷漠': '#71717a',
+  '开心': '#ec4899',
 };
 
 // ===== DOM =====
@@ -855,17 +1048,18 @@ function handleFile(file) {
   log('info', `文件已选择: ${file.name} (${size})`);
   if (!$('#bookTitle').value) $('#bookTitle').value = file.name.replace(/\.[^.]+$/, '');
 
-  // Show text preview for txt files
   if (ext === 'txt') {
     const reader = new FileReader();
     reader.onload = e => {
       state.fileText = e.target.result;
       showTextPreview(state.fileText);
+      parseChapters(state.fileText);
+      updateCostEstimator();
     };
     reader.readAsText(file);
   } else {
-    // For epub/pdf, show simulated preview
     showTextPreview(null);
+    $('#chapterList').style.display = 'none';
   }
 }
 
@@ -876,13 +1070,10 @@ function showTextPreview(text) {
   preview.style.display = '';
 
   if (text) {
-    // Parse chapters
     const chapterRegex = /^(第[一二三四五六七八九十百千零\d]+[章节回卷集部篇]|Chapter\s+\d+|CHAPTER\s+\d+)/gm;
     const chapters = text.match(chapterRegex) || [];
     const charCount = text.length;
-    const wordCount = text.replace(/\s/g, '').length;
 
-    // Render text with chapter markers
     let html = escapeHtml(text.substring(0, 3000));
     chapters.forEach(ch => {
       const escaped = escapeHtml(ch);
@@ -902,6 +1093,293 @@ function showTextPreview(text) {
   }
 }
 
+// ===== CHAPTER PARSING (NEW) =====
+function parseChapters(text) {
+  const chapterRegex = /^(第[一二三四五六七八九十百千零\d]+[章节回卷集部篇]|Chapter\s+\d+|CHAPTER\s+\d+)[\s]*(.+)?$/gm;
+  const chapters = [];
+  let match;
+  let lastIndex = 0;
+
+  while ((match = chapterRegex.exec(text)) !== null) {
+    const start = match.index;
+    const length = lastIndex === 0 ? text.indexOf('\n', start + match[0].length) - start : start - lastIndex;
+    chapters.push({
+      title: match[0].trim(),
+      subtitle: match[2] ? match[2].trim() : '',
+      start: start,
+      length: Math.max(500, Math.floor(text.length / 10)), // Simulated
+      selected: true
+    });
+    lastIndex = start;
+  }
+
+  // If no chapters found, create a single chapter
+  if (chapters.length === 0) {
+    chapters.push({
+      title: '全文',
+      subtitle: '',
+      start: 0,
+      length: text.length,
+      selected: true
+    });
+  }
+
+  state.chapters = chapters;
+  state.selectedChapters = new Set(chapters.map((_, i) => i));
+  renderChapterList();
+  $('#chapterList').style.display = '';
+}
+
+function renderChapterList() {
+  const container = $('#chapterItems');
+  container.innerHTML = state.chapters.map((ch, i) => `
+    <div class="chapter-item ${ch.selected ? 'selected' : ''}" onclick="toggleChapter(${i})">
+      <div class="chapter-item-checkbox"></div>
+      <div class="chapter-item-info">
+        <div class="chapter-item-name">${escapeHtml(ch.title)} ${ch.subtitle ? '<span style="color:var(--text-3)">- ' + escapeHtml(ch.subtitle) + '</span>' : ''}</div>
+        <div class="chapter-item-meta">约 ${Math.ceil(ch.length / 500)} 个片段 · ${Math.ceil(ch.length / 300)} 分钟</div>
+      </div>
+      <div class="chapter-item-length">${(ch.length / 1000).toFixed(1)}k</div>
+    </div>
+  `).join('');
+}
+
+function toggleChapter(idx) {
+  state.chapters[idx].selected = !state.chapters[idx].selected;
+  if (state.chapters[idx].selected) {
+    state.selectedChapters.add(idx);
+  } else {
+    state.selectedChapters.delete(idx);
+  }
+  renderChapterList();
+  updateCostEstimator();
+}
+
+function selectAllChapters(select) {
+  state.chapters.forEach((ch, i) => {
+    ch.selected = select;
+    if (select) state.selectedChapters.add(i);
+    else state.selectedChapters.delete(i);
+  });
+  renderChapterList();
+  updateCostEstimator();
+}
+
+// ===== COST ESTIMATOR (NEW) =====
+function updateCostEstimator() {
+  const charCount = state.fileText.length;
+  const selectedChars = Array.from(state.selectedChapters).reduce((sum, idx) => {
+    return sum + (state.chapters[idx]?.length || 0);
+  }, 0);
+
+  // Pricing (approximate)
+  const llmPricePer1M = $('#llmModel').value === 'deepseek-v4-pro' ? 50 : 2; // CNY per 1M tokens
+  const ttsPricePer1K = 0.015; // CNY per 1K chars
+
+  // Estimates
+  const llmTokens = Math.ceil(selectedChars * 0.6); // ~0.6 tokens per char for Chinese
+  const ttsChars = selectedChars;
+  const llmCost = (llmTokens / 1000000) * llmPricePer1M;
+  const ttsCost = (ttsChars / 1000) * ttsPricePer1K;
+  const totalCost = llmCost + ttsCost;
+
+  // Time estimate (roughly 300 chars per minute at 1x speed)
+  const durationMinutes = Math.ceil(ttsChars / 300);
+
+  $('#costChars').textContent = selectedChars.toLocaleString();
+  $('#costLLM').textContent = llmTokens.toLocaleString();
+  $('#costTTS').textContent = ttsChars.toLocaleString();
+  $('#costTime').textContent = `${Math.floor(durationMinutes / 60)}:${String(durationMinutes % 60).padStart(2, '0')}`;
+  $('#costMoney').textContent = `¥${totalCost.toFixed(2)}`;
+
+  // Warning if too expensive
+  if (totalCost > 10) {
+    $('#costMoney').classList.add('warning');
+    $('#costMoney').classList.remove('highlight');
+  } else {
+    $('#costMoney').classList.add('highlight');
+    $('#costMoney').classList.remove('warning');
+  }
+}
+
+// Listen for config changes
+$('#llmModel').addEventListener('change', updateCostEstimator);
+$('#chunkSize').addEventListener('input', updateCostEstimator);
+
+// ===== CONFIG TEMPLATE (NEW) =====
+function saveConfigTemplate() {
+  const name = prompt('为当前配置命名:');
+  if (!name) return;
+
+  const template = {
+    name,
+    timestamp: Date.now(),
+    config: {
+      title: $('#bookTitle').value,
+      author: $('#bookAuthor').value,
+      outputFormat: $('#outputFormat').value,
+      llmModel: $('#llmModel').value,
+      chunkSize: $('#chunkSize').value,
+      silence: $('#silence').value,
+      processMode: $('#processMode').value,
+      voiceMode: document.querySelector('.voice-mode-tab.active').dataset.mode,
+      narratorDesc: $('#narratorDesc').value,
+    }
+  };
+
+  state.configTemplates.push(template);
+  localStorage.setItem('ttssolo_templates', JSON.stringify(state.configTemplates));
+  renderConfigTemplates();
+  showToast('配置已保存', 'success');
+  log('info', `配置模板已保存: ${name}`);
+}
+
+function renderConfigTemplates() {
+  const container = $('#configTemplateList');
+  if (state.configTemplates.length === 0) {
+    container.innerHTML = '<span style="font-size:11px;color:var(--text-3)">暂无保存的配置</span>';
+    return;
+  }
+  container.innerHTML = state.configTemplates.map((t, i) => `
+    <div class="config-template-tag" onclick="loadConfigTemplate(${i})">
+      ${t.name}
+      <span class="remove" onclick="event.stopPropagation();deleteConfigTemplate(${i})">×</span>
+    </div>
+  `).join('');
+}
+
+function loadConfigTemplate(idx) {
+  const t = state.configTemplates[idx];
+  if (!t) return;
+  const c = t.config;
+
+  $('#bookTitle').value = c.title || '';
+  $('#bookAuthor').value = c.author || '';
+  $('#outputFormat').value = c.outputFormat || 'mp3';
+  $('#llmModel').value = c.llmModel || 'deepseek-v4-flash';
+  $('#chunkSize').value = c.chunkSize || 500;
+  $('#silence').value = c.silence || 1.0;
+  $('#processMode').value = c.processMode || 'pipeline';
+  $('#narratorDesc').value = c.narratorDesc || '';
+
+  // Switch voice mode tab
+  document.querySelectorAll('.voice-mode-tab').forEach(tab => {
+    if (tab.dataset.mode === c.voiceMode) tab.click();
+  });
+
+  updateCostEstimator();
+  showToast('配置已加载', 'success');
+  log('info', `配置模板已加载: ${t.name}`);
+}
+
+function deleteConfigTemplate(idx) {
+  state.configTemplates.splice(idx, 1);
+  localStorage.setItem('ttssolo_templates', JSON.stringify(state.configTemplates));
+  renderConfigTemplates();
+}
+
+function exportConfigYAML() {
+  const c = {
+    title: $('#bookTitle').value || 'untitled',
+    author: $('#bookAuthor').value || '',
+    output_format: $('#outputFormat').value,
+    llm: { model: $('#llmModel').value },
+    tts: {
+      chunk_size: parseInt($('#chunkSize').value),
+      silence: parseFloat($('#silence').value),
+    },
+    processing: { mode: $('#processMode').value },
+    voice: {
+      mode: document.querySelector('.voice-mode-tab.active').dataset.mode,
+      narrator: $('#narratorDesc').value,
+    }
+  };
+
+  const yaml = `# TTSsolo Configuration
+# Generated at ${new Date().toISOString()}
+
+book:
+  title: "${c.title}"
+  author: "${c.author}"
+
+output:
+  format: "${c.output_format}"
+
+llm:
+  model: "${c.llm.model}"
+
+tts:
+  chunk_size: ${c.tts.chunk_size}
+  silence_seconds: ${c.tts.silence}
+
+processing:
+  mode: "${c.processing.mode}"
+
+voice:
+  mode: "${c.voice.mode}"
+  narrator_description: |
+    ${c.voice.narrator.replace(/\n/g, '\n    ')}
+`;
+
+  const blob = new Blob([yaml], { type: 'text/yaml' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ttssolo_config_${c.title.replace(/\s+/g, '_')}.yaml`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('配置已导出', 'success');
+}
+
+function importConfigFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const content = e.target.result;
+      // Simple YAML-like parsing
+      const getValue = (key) => {
+        const match = content.match(new RegExp(`${key}:\\s*["']?([^"'\\n]+)["']?`));
+        return match ? match[1].trim() : '';
+      };
+
+      $('#bookTitle').value = getValue('title') || '';
+      $('#bookAuthor').value = getValue('author') || '';
+
+      const format = getValue('format');
+      if (format) $('#outputFormat').value = format;
+
+      const model = getValue('model');
+      if (model) $('#llmModel').value = model;
+
+      const chunkSize = content.match(/chunk_size:\\s*(\d+)/);
+      if (chunkSize) $('#chunkSize').value = chunkSize[1];
+
+      const silence = content.match(/silence_seconds:\\s*([\d.]+)/);
+      if (silence) $('#silence').value = silence[1];
+
+      const mode = getValue('mode');
+      if (mode) $('#processMode').value = mode;
+
+      // Extract narrator description
+      const narratorMatch = content.match(/narrator_description:\\s*\\|([^]*?)(?=\\n\\w|$)/);
+      if (narratorMatch) {
+        $('#narratorDesc').value = narratorMatch[1].trim().replace(/\\n    /g, '\\n');
+      }
+
+      updateCostEstimator();
+      showToast('配置已导入', 'success');
+      log('info', '配置已从文件导入');
+    } catch (err) {
+      showToast('配置文件解析失败', 'error');
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
 function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
@@ -911,10 +1389,14 @@ function escapeHtml(str) {
 function removeFile() {
   state.file = null;
   state.fileText = '';
+  state.chapters = [];
+  state.selectedChapters.clear();
   fileInput.value = '';
   $('#fileInfo').style.display = 'none';
   $('#textPreview').style.display = 'none';
+  $('#chapterList').style.display = 'none';
   uploadZone.style.display = '';
+  updateCostEstimator();
 }
 
 // Text preview toggle
@@ -953,7 +1435,7 @@ function selectPreset(el) {
   log('info', `已选择旁白音色: ${el.dataset.voice}`);
 }
 
-// ===== VOICE PREVIEW (simulated) =====
+// ===== VOICE PREVIEW =====
 let previewTimeout = null;
 function previewVoice(btn, name) {
   if (btn.classList.contains('playing')) {
@@ -962,7 +1444,6 @@ function previewVoice(btn, name) {
     clearTimeout(previewTimeout);
     return;
   }
-  // Stop all other previews
   $$('.voice-preview-btn.playing').forEach(b => {
     b.classList.remove('playing');
     b.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> 试听音色';
@@ -1034,6 +1515,7 @@ $('#generateBtn').addEventListener('click', startGeneration);
 
 function startGeneration() {
   if (!state.file) { showToast('请先上传文本文件', 'error'); return; }
+  if (state.selectedChapters.size === 0) { showToast('请至少选择一个章节', 'error'); return; }
   if (state.isRunning) { showToast('任务正在运行中', 'error'); return; }
 
   state.isRunning = true;
@@ -1042,7 +1524,6 @@ function startGeneration() {
   $('#generateBtn').style.opacity = '.7';
   $('#generateBtn').style.pointerEvents = 'none';
 
-  // Start timer
   state.timer = setInterval(() => {
     state.elapsed++;
     const m = String(Math.floor(state.elapsed / 60)).padStart(2, '0');
@@ -1050,9 +1531,7 @@ function startGeneration() {
     $('#totalTime').textContent = `${m}:${s}`;
   }, 1000);
 
-  // Scroll to pipeline
   $('#stage-parse').scrollIntoView({ behavior: 'smooth', block: 'center' });
-
   simulatePipeline();
 }
 
@@ -1089,7 +1568,7 @@ function simulatePipeline() {
     } else {
       setTimeout(() => {
         setStageDone(stage);
-        if (stage === 'parse') $(`#detail-parse`).textContent = '解析完成，检测到 1 章';
+        if (stage === 'parse') $(`#detail-parse`).textContent = `解析完成，检测到 ${state.selectedChapters.size} 章`;
         if (stage === 'analyze') {
           $(`#detail-analyze`).textContent = '识别到 3 个角色（含旁白）';
           state.characters = [
@@ -1098,6 +1577,7 @@ function simulatePipeline() {
             { name: '神秘男人', type: 'character' },
           ];
           renderSegments();
+          renderEmotionHeatmap();
         }
         if (stage === 'merge') $(`#detail-merge`).textContent = '合并完成';
         idx++;
@@ -1119,10 +1599,7 @@ function simulateProgress(stage, duration, cb) {
     const pct = (current / total * 100).toFixed(0);
     $(`#bar-${stage}`).style.width = pct + '%';
     $(`#detail-${stage}`).textContent = `${stage === 'script' ? '正在生成剧本' : '正在合成语音'}（${current}/${total}）`;
-
-    // Highlight corresponding segment
     if (stage === 'tts') highlightSegment(current - 1);
-
     if (current < total) {
       setTimeout(tick, interval + Math.random() * 200);
     } else {
@@ -1167,13 +1644,101 @@ function renderSegments() {
   $('#segmentCount').textContent = `${sampleSegments.length} 个片段`;
 
   $('#segmentsList').innerHTML = sampleSegments.map((s, i) => `
-    <div class="segment-item" data-idx="${i}">
+    <div class="segment-item" data-idx="${i}" onclick="scrollToSegment(${i})">
       <span class="segment-idx">${String(i + 1).padStart(2, '0')}</span>
       <span class="segment-speaker ${s.speaker === '旁白' ? 'narrator' : 'character'}">${s.speaker}</span>
       <span class="segment-text">${s.text}</span>
       <span class="segment-emotion">${s.emotion}</span>
       <span class="segment-status done"></span>
+      <button class="segment-compare-btn" onclick="event.stopPropagation();openComparePlayer(${i})">对比</button>
     </div>`).join('');
+}
+
+// ===== EMOTION HEATMAP (NEW) =====
+function renderEmotionHeatmap() {
+  $('#heatmapPanel').style.display = '';
+  const grid = $('#emotionHeatmapGrid');
+
+  grid.innerHTML = state.segments.map((s, i) => {
+    const color = emotionColors[s.emotion] || '#71717a';
+    return `<div class="emotion-heatmap-cell" style="background:${color}" data-emotion="${s.emotion}" onclick="scrollToSegment(${i})"></div>`;
+  }).join('');
+}
+
+function scrollToSegment(idx) {
+  const item = $(`.segment-item[data-idx="${idx}"]`);
+  if (item) {
+    item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    item.classList.add('highlight');
+    setTimeout(() => item.classList.remove('highlight'), 2000);
+  }
+}
+
+// ===== COMPARE PLAYER (NEW) =====
+function openComparePlayer(idx) {
+  const segment = state.segments[idx];
+  if (!segment) return;
+
+  state.comparingSegment = idx;
+  const container = $('#comparePlayer');
+  container.style.display = '';
+
+  // Generate voice variations
+  const voices = [
+    { name: '旁白（原）', emotion: segment.emotion, speaker: 'narrator' },
+    { name: '旁白（温和）', emotion: '温和', speaker: 'narrator' },
+    { name: '林晓（惊讶）', emotion: '惊讶', speaker: 'character' },
+  ];
+
+  container.innerHTML = `
+    <div class="compare-player">
+      <div class="compare-player-header">
+        <span class="compare-player-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+          音色对比试听 · 片段 #${idx + 1}
+        </span>
+        <div class="compare-player-close" onclick="closeComparePlayer()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+      </div>
+      <div class="compare-player-text">${segment.text}</div>
+      <div class="compare-voices">
+        ${voices.map((v, i) => `
+          <div class="compare-voice-item" id="compare-voice-${i}">
+            <span class="compare-voice-name">${v.name}</span>
+            <span class="compare-voice-emotion">${v.emotion}</span>
+            <button class="compare-voice-play" onclick="playCompareVoice(${i}, '${v.name}')">
+              <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </button>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+}
+
+function closeComparePlayer() {
+  $('#comparePlayer').style.display = 'none';
+  state.comparingSegment = null;
+}
+
+let comparePlayTimeout = null;
+function playCompareVoice(idx, name) {
+  // Stop others
+  $$('.compare-voice-item').forEach((el, i) => {
+    el.classList.remove('active');
+    el.querySelector('.compare-voice-play').innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+  });
+  clearTimeout(comparePlayTimeout);
+
+  const el = $(`#compare-voice-${idx}`);
+  el.classList.add('active');
+  el.querySelector('.compare-voice-play').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+  log('info', `对比试听: ${name}`);
+
+  comparePlayTimeout = setTimeout(() => {
+    el.classList.remove('active');
+    el.querySelector('.compare-voice-play').innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+  }, 3000);
 }
 
 function highlightSegment(idx) {
@@ -1199,17 +1764,14 @@ function finishGeneration() {
   $('#generateBtn').style.opacity = '1';
   $('#generateBtn').style.pointerEvents = '';
 
-  // Show player
   $('#playerPanel').style.display = '';
   $('#playerPanel').scrollIntoView({ behavior: 'smooth', block: 'center' });
   $('#trackTitle').textContent = '第一章 神秘的来信';
   $('#trackChapter').textContent = 'AI有声书 · MP3 192kbps';
-  $('#playerChapterBadge').textContent = '第 1 章';
+  $('#playerChapterBadge').textContent = `第 ${Array.from(state.selectedChapters)[0] + 1} 章`;
 
-  // Init waveform
   initWaveform();
 
-  // Show output
   $('#outputList').innerHTML = `
     <div class="output-item">
       <div class="output-icon">
@@ -1227,15 +1789,13 @@ function finishGeneration() {
       </div>
     </div>`;
 
-  log('success', '有声书生成完成！共 1 个章节，总时长 3:42');
+  log('success', '有声书生成完成！');
   showToast('有声书生成完成', 'success');
-
-  // Set status online
   $('#statusDot').classList.add('online');
   $('#statusText').textContent = '就绪';
 }
 
-// ===== WAVEFORM VISUALIZATION =====
+// ===== WAVEFORM =====
 function initWaveform() {
   const canvas = $('#waveformCanvas');
   const container = $('#waveformContainer');
@@ -1255,10 +1815,8 @@ function initWaveform() {
   const barWidth = 2;
   const gap = 1;
 
-  // Generate random waveform data
   const waveData = [];
   for (let i = 0; i < barCount; i++) {
-    // Simulate natural audio waveform with envelope
     const pos = i / barCount;
     const envelope = Math.sin(pos * Math.PI) * 0.7 + 0.3;
     const noise = Math.random() * 0.6 + 0.2;
@@ -1267,22 +1825,12 @@ function initWaveform() {
 
   function drawWaveform(progress) {
     ctx.clearRect(0, 0, w, h);
-
     const progressX = progress * w;
-
     for (let i = 0; i < barCount; i++) {
       const x = i * (barWidth + gap);
       const barH = Math.max(2, waveData[i] * (h - 8));
       const y = (h - barH) / 2;
-
-      if (x < progressX) {
-        // Played portion
-        ctx.fillStyle = 'rgba(99, 102, 241, 0.8)';
-      } else {
-        // Unplayed portion
-        ctx.fillStyle = 'rgba(99, 102, 241, 0.2)';
-      }
-
+      ctx.fillStyle = x < progressX ? 'rgba(99, 102, 241, 0.8)' : 'rgba(99, 102, 241, 0.2)';
       ctx.beginPath();
       ctx.roundRect(x, y, barWidth, barH, 1);
       ctx.fill();
@@ -1290,24 +1838,17 @@ function initWaveform() {
   }
 
   drawWaveform(0);
-
-  // Store for playback
   state.waveformDraw = drawWaveform;
   state.waveformWidth = w;
 
-  // Click to seek
   container.addEventListener('click', e => {
     const rect = container.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const pct = x / rect.width;
     state.playbackProgress = pct * 222;
     updateWaveformPlayhead(pct);
-    if (state.isPlaying) {
-      // Continue from new position
-    }
   });
 
-  // Hover effect
   container.addEventListener('mousemove', e => {
     const rect = container.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -1317,9 +1858,7 @@ function initWaveform() {
 
 function updateWaveformPlayhead(pct) {
   $('#waveformPlayhead').style.left = (pct * 100) + '%';
-  if (state.waveformDraw) {
-    state.waveformDraw(pct);
-  }
+  if (state.waveformDraw) state.waveformDraw(pct);
 }
 
 // ===== AUDIO PLAYER =====
@@ -1335,7 +1874,6 @@ function togglePlayback() {
 }
 
 function simulatePlayback() {
-  const fill = $('#audioProgressFill');
   const current = $('#audioCurrentTime');
   const duration = $('#audioDuration');
   duration.textContent = '3:42';
@@ -1371,9 +1909,7 @@ function toggleSpeed() {
 
 // ===== KEYBOARD SHORTCUTS =====
 document.addEventListener('keydown', e => {
-  // Don't trigger shortcuts when typing in inputs
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
-
   if (e.code === 'Space') {
     e.preventDefault();
     togglePlayback();
@@ -1439,15 +1975,14 @@ function showToast(msg, type = 'info') {
 // ===== INIT =====
 $('#statusDot').classList.add('online');
 $('#statusText').textContent = '就绪';
-log('info', 'TTSsolo 前端已加载，等待任务...');
+renderConfigTemplates();
+updateCostEstimator();
+log('info', 'TTSsolo 前端已加载');
 log('info', '快捷键: Space=播放/暂停, Ctrl+G=开始生成');
 
-// ===== WINDOW RESIZE =====
 window.addEventListener('resize', () => {
-  if (state.waveformDraw) {
-    initWaveform();
-  }
+  if (state.waveformDraw) initWaveform();
 });
 </script>
 </body>
-</html>
+</
