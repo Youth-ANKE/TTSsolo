@@ -6,10 +6,11 @@
 三个阶段通过 asyncio.Queue 连接，实现片段级流水线并行。
 """
 
+import re
 import os
-import asyncio
 import json
 import time
+import asyncio
 import logging
 from typing import List, Optional, Dict
 from dataclasses import dataclass
@@ -102,13 +103,15 @@ class AudiobookPipeline:
         self.on_chapter_complete = None  # func(chapter_index, chapter_title, output_path)
     
     async def generate(self, input_file: str,
-                       chapter_range: Optional[tuple] = None) -> List[str]:
+                       chapter_range: Optional[tuple] = None,
+                       skip_tts: bool = False) -> List[str]:
         """
         流水线生成有声书
         
         Args:
             input_file: 输入文件路径
             chapter_range: 章节范围 (start, end)
+            skip_tts: 是否跳过 TTS 合成（仅生成剧本）
         
         Returns:
             生成的音频文件路径列表
@@ -146,12 +149,23 @@ class AudiobookPipeline:
         # ===== 第三步：启动流水线 =====
         logger.info("\n🔧 启动流水线...")
         
+        output_files = []
+        
+        if skip_tts:
+            # 仅生成剧本模式
+            logger.info("🚩 跳过TTS合成，仅生成剧本")
+            script_queue = asyncio.Queue()
+            skip_worker = asyncio.create_task(
+                self._skip_tts_worker(chapters, characters, script_queue)
+            )
+            await skip_worker
+            elapsed = time.time() - start_time
+            logger.info(f"\n剧本生成完成！总耗时: {elapsed:.1f}秒")
+            return output_files
+        
         # 创建队列
         script_queue = asyncio.Queue(maxsize=self.queue_size)   # 剧本队列
         audio_queue = asyncio.Queue(maxsize=self.queue_size)     # 音频队列
-        
-        # 终止信号
-        output_files = []
         
         # 启动三个Worker
         llm_task = asyncio.create_task(
@@ -210,9 +224,10 @@ class AudiobookPipeline:
                     characters=characters,
                     segments=segments,
                 )
+                safe_title = re.sub(r'[\\/*?:"<>|]', '_', chapter.title)
                 script_file = os.path.join(
                     self.script_dir,
-                    f"chapter_{chapter.index:03d}_{chapter.title}.json"
+                    f"chapter_{chapter.index:03d}_{safe_title}.json"
                 )
                 self._save_script(script, script_file)
                 
@@ -350,7 +365,8 @@ class AudiobookPipeline:
                     # 创建新章节Writer
                     current_chapter_idx = result.chapter_index
                     ext = current_ext
-                    output_filename = f"chapter_{result.chapter_index:03d}_{result.chapter_title}.{ext}"
+                    safe_chapter_title = re.sub(r'[\\/*?:"<>|]', '_', result.chapter_title)
+                    output_filename = f"chapter_{result.chapter_index:03d}_{safe_chapter_title}.{ext}"
                     current_output_path = os.path.join(self.output_dir, output_filename)
                     
                     current_writer = self.audio_processor.create_stream_writer(
@@ -387,6 +403,33 @@ class AudiobookPipeline:
         
         except Exception as e:
             logger.error(f"[Output Worker] 错误: {e}", exc_info=True)
+    
+    async def _skip_tts_worker(self, chapters, characters, queue: asyncio.Queue):
+        """仅生成剧本的Worker：逐章生成JSON剧本文件，跳过TTS"""
+        try:
+            for chapter in chapters:
+                logger.info(f"\n📖 [纯剧本] 处理章节 [{chapter.index}] {chapter.title}")
+                script = await self.llm.generate_script(
+                    chapter_index=chapter.index,
+                    chapter_title=chapter.title,
+                    text=chapter.content,
+                    characters=characters,
+                )
+                safe_title = re.sub(r'[\\/*?:"<>|]', '_', chapter.title)
+                script_file = os.path.join(
+                    self.output_dir, "scripts",
+                    f"chapter_{chapter.index:03d}_{safe_title}.json"
+                )
+                os.makedirs(os.path.dirname(script_file), exist_ok=True)
+                self._save_script(script, script_file)
+                logger.info(f"✅ 剧本已保存: {script_file}")
+                self.stats["total_segments"] = (
+                    self.stats.get("total_segments", 0) + len(script.segments)
+                )
+        except Exception as e:
+            logger.error(f"[纯剧本Worker] 出错: {e}", exc_info=True)
+        finally:
+            queue.put_nowait(None)  # 发送终止信号
     
     # ============================================================
     # 辅助方法

@@ -42,7 +42,6 @@ class SpeechSegment:
     text: str                    # 要合成的文本
     emotion: str = ""             # 情绪标签
     style_instruction: str = ""   # 自然语言风格指令（放在user消息中）
-    audio_tags: str = ""          # 音频标签（放在assistant文本开头）
 
 
 @dataclass

@@ -321,27 +321,25 @@ class AsyncTTSEngine:
         character_map = {c.name: c for c in script.characters}
         total = len(script.segments)
         
-        # 创建所有异步任务
+        # 创建所有异步任务并并发执行
         tasks = []
         for i, segment in enumerate(script.segments):
             character = character_map.get(segment.speaker)
             output_path = os.path.join(segment_dir, f"seg_{segment.index:04d}.wav")
             
-            task = self.synthesize_segment(
+            task = asyncio.create_task(self.synthesize_segment(
                 segment=segment,
                 character=character,
                 output_path=output_path,
                 chapter_index=script.chapter_index,
-            )
+            ))
             tasks.append(task)
         
         logger.info(f"[Async] 并发提交 {total} 个TTS任务（最大并发: {self.max_concurrent}）")
         
-        # 并发执行，按顺序收集结果
-        audio_segments = []
-        for i, task in enumerate(tasks):
-            result = await task
-            audio_segments.append(result)
+        # 并发执行所有任务，gather 保持原始顺序
+        audio_segments = await asyncio.gather(*tasks)
+        for i in range(total):
             logger.info(f"[Async] 章节合成进度: {i + 1}/{total}")
         
         logger.info(f"[Async] 章节 [{script.chapter_index}] 合成完成，共 {len(audio_segments)} 个片段")

@@ -381,6 +381,8 @@ a:hover{color:var(--accent-hover)}
   .section{padding:48px 0}
   .audio-player-row{flex-wrap:wrap}
   .chapter-list-actions{display:none}
+  #navHamburger{display:block !important}
+  .nav-links.mobile-open{display:flex !important;flex-direction:column;position:absolute;top:56px;left:0;right:0;background:rgba(9,9,11,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-1);padding:8px 16px}
 }
 
 /* ===== TOAST ===== */
@@ -412,6 +414,10 @@ a:hover{color:var(--accent-hover)}
     <a href="#workspace" data-section="workspace">工作台</a>
     <a href="#output" data-section="output">输出</a>
     <a href="https://github.com/Youth-ANKE/TTSsolo" target="_blank">GitHub</a>
+  </div>
+  <!-- Mobile hamburger -->
+  <div style="display:none" class="nav-hamburger" id="navHamburger" onclick="toggleMobileNav()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
   </div>
   <div style="display:flex;align-items:center;gap:16px">
     <div class="nav-shortcuts">
@@ -906,14 +912,14 @@ a:hover{color:var(--accent-hover)}
               </div>
               <div class="audio-controls">
                 <button id="speedBtn" onclick="toggleSpeed()">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                   <span id="speedLabel">1.0x</span>
                 </button>
                 <button onclick="showToast('已复制分享链接','info')">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                   分享
                 </button>
-                <button onclick="showToast('开始下载...','info')">
+                <button onclick="downloadOutput()">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                   下载
                 </button>
@@ -970,6 +976,36 @@ a:hover{color:var(--accent-hover)}
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
+// ===== BROWSER COMPATIBILITY =====
+// roundRect polyfill for older browsers
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+    if (r > w / 2) r = w / 2;
+    if (r > h / 2) r = h / 2;
+    this.moveTo(x + r, y);
+    this.lineTo(x + w - r, y);
+    this.quadraticCurveTo(x + w, y, x + w, y + r);
+    this.lineTo(x + w, y + h - r);
+    this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    this.lineTo(x + r, y + h);
+    this.quadraticCurveTo(x, y + h, x, y + h - r);
+    this.lineTo(x, y + r);
+    this.quadraticCurveTo(x, y, x + r, y);
+    this.closePath();
+    return this;
+  };
+}
+
+// Safe localStorage access
+function safeGetItem(key, defaultVal) {
+  try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(defaultVal)); }
+  catch(e) { return defaultVal; }
+}
+function safeSetItem(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); }
+  catch(e) { /* localStorage unavailable */ }
+}
+
 // ===== STATE =====
 const state = {
   file: null,
@@ -987,7 +1023,7 @@ const state = {
   speeds: [0.75, 1.0, 1.25, 1.5, 2.0],
   speedIdx: 1,
   previewCollapsed: false,
-  configTemplates: JSON.parse(localStorage.getItem('ttssolo_templates') || '[]'),
+  configTemplates: safeGetItem('ttssolo_templates', []),
   comparingSegment: null,
 };
 
@@ -1027,6 +1063,11 @@ function handleFile(file) {
   const ext = file.name.split('.').pop().toLowerCase();
   if (!['txt', 'epub', 'pdf'].includes(ext)) {
     showToast('不支持的文件格式', 'error');
+    return;
+  }
+  // 文件大小验证（UI 声明最大 50MB）
+  if (file.size > 50 * 1024 * 1024) {
+    showToast('文件超过 50MB 限制', 'error');
     return;
   }
   state.file = file;
@@ -1102,15 +1143,23 @@ function parseChapters(text) {
 
   while ((match = chapterRegex.exec(text)) !== null) {
     const start = match.index;
-    const length = lastIndex === 0 ? text.indexOf('\n', start + match[0].length) - start : start - lastIndex;
+    if (lastIndex > 0 && chapters.length > 0) {
+      // 更新上一章的实际内容长度
+      chapters[chapters.length - 1].length = Math.max(500, start - lastIndex);
+    }
     chapters.push({
       title: match[0].trim(),
       subtitle: match[2] ? match[2].trim() : '',
       start: start,
-      length: Math.max(500, Math.floor(text.length / 10)), // Simulated
+      length: 500, // 临时值，将在下一轮或结尾更新
       selected: true
     });
     lastIndex = start;
+  }
+
+  // 设置最后一章的实际长度
+  if (chapters.length > 0) {
+    chapters[chapters.length - 1].length = Math.max(500, text.length - lastIndex);
   }
 
   // If no chapters found, create a single chapter
@@ -1228,7 +1277,7 @@ function saveConfigTemplate() {
   };
 
   state.configTemplates.push(template);
-  localStorage.setItem('ttssolo_templates', JSON.stringify(state.configTemplates));
+  safeSetItem('ttssolo_templates', state.configTemplates);
   renderConfigTemplates();
   showToast('配置已保存', 'success');
   log('info', `配置模板已保存: ${name}`);
@@ -1274,7 +1323,7 @@ function loadConfigTemplate(idx) {
 
 function deleteConfigTemplate(idx) {
   state.configTemplates.splice(idx, 1);
-  localStorage.setItem('ttssolo_templates', JSON.stringify(state.configTemplates));
+  safeSetItem('ttssolo_templates', state.configTemplates);
   renderConfigTemplates();
 }
 
@@ -1391,12 +1440,26 @@ function removeFile() {
   state.fileText = '';
   state.chapters = [];
   state.selectedChapters.clear();
+  state.characters = [];
+  state.segments = [];
+  state.previewCollapsed = false;
+  state.isRunning = false;
+  state.playbackProgress = 0;
+  if (state.timer) { clearInterval(state.timer); state.timer = null; }
   fileInput.value = '';
   $('#fileInfo').style.display = 'none';
   $('#textPreview').style.display = 'none';
   $('#chapterList').style.display = 'none';
+  $('#heatmapPanel').style.display = 'none';
+  $('#comparePlayer').style.display = 'none';
+  $('#playerPanel').style.display = 'none';
+  $('#segmentsList').innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="13" y2="14"/></svg><div class="title">暂无片段</div><div class="hint">生成剧本后将在此显示语音片段列表<br>点击「对比」按钮可试听不同音色效果</div></div>';
+  $('#segmentCount').textContent = '0 个片段';
+  $('#outputList').innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><div class="title">尚未生成任何文件</div><div class="hint">完成有声书生成后，音频文件将显示在此处</div></div>';
+  closeComparePlayer();
   uploadZone.style.display = '';
   updateCostEstimator();
+  log('info', '文件已移除');
 }
 
 // Text preview toggle
@@ -1764,6 +1827,11 @@ function finishGeneration() {
   $('#generateBtn').style.opacity = '1';
   $('#generateBtn').style.pointerEvents = '';
 
+  // 将所有 processing 状态恢复为 done
+  $$('.segment-status.processing').forEach(el => {
+    el.className = 'segment-status done';
+  });
+  clearSegmentHighlight();
   $('#playerPanel').style.display = '';
   $('#playerPanel').scrollIntoView({ behavior: 'smooth', block: 'center' });
   $('#trackTitle').textContent = '第一章 神秘的来信';
@@ -1782,7 +1850,7 @@ function finishGeneration() {
         <div class="output-meta">MP3 · 192kbps · 24kHz · 3:42</div>
       </div>
       <div class="output-actions">
-        <button class="btn btn-ghost btn-sm" onclick="showToast('开始下载...','info')">
+        <button class="btn btn-ghost btn-sm" onclick="downloadOutput(this)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           下载
         </button>
@@ -1793,6 +1861,12 @@ function finishGeneration() {
   showToast('有声书生成完成', 'success');
   $('#statusDot').classList.add('online');
   $('#statusText').textContent = '就绪';
+}
+
+// Mobile nav toggle
+function toggleMobileNav() {
+  const links = $('#navLinks');
+  links.classList.toggle('mobile-open');
 }
 
 // ===== WAVEFORM =====
@@ -1905,6 +1979,52 @@ function toggleSpeed() {
   state.playbackSpeed = state.speeds[state.speedIdx];
   $('#speedLabel').textContent = state.playbackSpeed + 'x';
   showToast(`播放速度: ${state.playbackSpeed}x`, 'info');
+}
+
+// Real download (generates simulated audio blob)
+function downloadOutput() {
+  // Generate a synthetic WAV blob for download
+  const sampleRate = 24000;
+  const duration = 3; // seconds
+  const numSamples = sampleRate * duration;
+  const buffer = new ArrayBuffer(44 + numSamples * 2);
+  const view = new DataView(buffer);
+  
+  // WAV header
+  const writeStr = (off, str) => { for (let i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i)); };
+  writeStr(0, 'RIFF');
+  view.setUint32(4, 36 + numSamples * 2, true);
+  writeStr(8, 'WAVE');
+  writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeStr(36, 'data');
+  view.setUint32(40, numSamples * 2, true);
+  
+  // Simple sine wave + noise for demo
+  for (let i = 0; i < numSamples; i++) {
+    const t = i / sampleRate;
+    const amp = Math.sin(Math.PI * t / duration) * 0.3;
+    const sample = Math.sin(2 * Math.PI * 220 * t) * amp * 0x7FFF;
+    view.setInt16(44 + i * 2, Math.round(sample), true);
+  }
+  
+  const blob = new Blob([buffer], { type: 'audio/wav' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `chapter_${String(state.playbackProgress > 0 ? 1 : 0).padStart(3,'0')}_ttssolo_demo.wav`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast('开始下载音频文件', 'success');
+  log('info', `下载音频: ${a.download}`);
 }
 
 // ===== KEYBOARD SHORTCUTS =====

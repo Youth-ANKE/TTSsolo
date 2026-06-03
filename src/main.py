@@ -6,6 +6,7 @@ AI有声书 - 主流程编排模块
   - 流水线模式（--pipeline）：异步并行处理，速度更快
 """
 
+import re
 import os
 import sys
 import json
@@ -102,9 +103,11 @@ class AudiobookGenerator:
                 characters=characters,
             )
             
+            # 生成安全的文件名（替换非法字符）
+            safe_title = re.sub(r'[\\/*?:"<>|]', '_', chapter.title)
             script_file = os.path.join(
                 self.script_dir,
-                f"chapter_{chapter.index:03d}_{chapter.title}.json"
+                f"chapter_{chapter.index:03d}_{safe_title}.json"
             )
             self._save_script(script, script_file)
             logger.info(f"剧本已保存: {script_file}")
@@ -116,7 +119,7 @@ class AudiobookGenerator:
             audio_segments = self.tts.synthesize_chapter(script)
             
             ext = self.config.output.format
-            output_filename = f"chapter_{chapter.index:03d}_{chapter.title}.{ext}"
+            output_filename = f"chapter_{chapter.index:03d}_{safe_title}.{ext}"
             output_path = os.path.join(self.output_dir, output_filename)
             
             final_path = self.audio_processor.concat_segments(
@@ -182,7 +185,8 @@ class AudiobookGenerator:
 
 async def run_pipeline(config: AppConfig, input_file: str,
                        chapter_range: Optional[tuple] = None,
-                       tts_concurrent: int = 3) -> List[str]:
+                       tts_concurrent: int = 3,
+                       script_only: bool = False) -> List[str]:
     """
     流水线模式入口（异步）
     
@@ -191,9 +195,7 @@ async def run_pipeline(config: AppConfig, input_file: str,
         input_file: 输入文件路径
         chapter_range: 章节范围
         tts_concurrent: TTS最大并发数
-    
-    Returns:
-        生成的音频文件路径列表
+        script_only: 仅生成剧本
     """
     pipeline = AudiobookPipeline(
         config=config,
@@ -203,6 +205,7 @@ async def run_pipeline(config: AppConfig, input_file: str,
     return await pipeline.generate(
         input_file=input_file,
         chapter_range=chapter_range,
+        skip_tts=script_only,
     )
 
 
@@ -292,7 +295,8 @@ def main():
     
     chapter_range = None
     if args.chapters:
-        chapter_range = (args.chapters[0], args.chapters[1])
+        # 用户输入为1-based，内部使用0-based
+        chapter_range = (args.chapters[0] - 1, args.chapters[1] - 1)
     
     try:
         if args.pipeline:
@@ -303,6 +307,7 @@ def main():
                 input_file=args.input,
                 chapter_range=chapter_range,
                 tts_concurrent=args.tts_concurrent,
+                script_only=args.script_only,
             ))
         else:
             # ===== 串行模式 =====

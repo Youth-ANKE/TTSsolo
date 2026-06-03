@@ -251,7 +251,7 @@ class EpubParser(TextParser):
         buffer_index = 0
         
         for ch in chapters:
-            if len(ch.content) < min_chars and merged or buffer_lines:
+            if len(ch.content) < min_chars and (merged or buffer_lines):
                 buffer_lines.append(ch.content)
             else:
                 if buffer_lines:
